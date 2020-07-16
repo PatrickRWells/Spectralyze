@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QLabel, QLineEdit
+from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QLabel, QLineEdit, QCheckBox
 from PyQt5.QtGui import QIntValidator, QDoubleValidator
 from PyQt5.QtCore import pyqtSignal
 
@@ -9,6 +9,7 @@ class Remote(QWidget):
     goSmooth = pyqtSignal(int)
     goUndoSmooth = pyqtSignal()
     goZGuess = pyqtSignal(float)
+    goUpdateSpectra = pyqtSignal(dict)
 
     def __init__(self):
         super().__init__()
@@ -47,9 +48,23 @@ class Remote(QWidget):
         self.inner2.addWidget(self.zGuessLabel)
         self.inner2.addWidget(self.zGuessBoxEdit)
 
+        self.inner3 = QHBoxLayout()
+        self.radioLayout = QVBoxLayout()
+
+        self.lineLabel = QLabel("Spectral Lines")
+        self.radio1 = QCheckBox("Strong Emission")
+        self.radio2 = QCheckBox("Other Emission")
+        self.radio3 = QCheckBox("Absorption")
+        self.radioLayout.addWidget(self.radio1)
+        self.radioLayout.addWidget(self.radio2)
+        self.radioLayout.addWidget(self.radio3)
+        self.inner3.addWidget(self.lineLabel)
+        self.inner3.addLayout(self.radioLayout)
+
         self.layout.addLayout(self.innerTop)
         self.layout.addLayout(self.inner1)
         self.layout.addLayout(self.inner2)
+        self.layout.addLayout(self.inner3)
 
         self.setLayout(self.layout)
         self.connectSlots()
@@ -60,6 +75,14 @@ class Remote(QWidget):
         self.smoothButton.clicked.connect(self.smoothPressed)
         self.undoSmooth.clicked.connect(self.undoSmoothPressed)
         self.zGuessBoxEdit.textChanged.connect(self.zGuessChanged)
+        self.radio1.stateChanged.connect(self.updateSpectra)
+        self.radio2.stateChanged.connect(self.updateSpectra)
+        self.radio3.stateChanged.connect(self.updateSpectra)
+
+    def updateSpectra(self):
+        spectra = {'strongem': self.radio1.checkState(), 'em': self.radio2.checkState(), 'abs': self.radio3.checkState()}
+        self.goUpdateSpectra.emit(spectra)
+
 
     def nextPressed(self):
         self.goNext.emit()

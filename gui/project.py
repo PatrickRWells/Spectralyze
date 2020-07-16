@@ -23,7 +23,6 @@ class specMeta:
     
     def addZ(self, num, z):
         self.z[num] = z
-        print("GOT IT")
     
     def returnZ(self, num):
         return self.z[num]

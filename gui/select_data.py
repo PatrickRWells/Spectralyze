@@ -26,7 +26,7 @@ class dataSelectWindow(QWidget):
         self.open_button.clicked.connect(self.fileBrowser.openFile)
         
     def connectSignals(self):
-        self.fileBrowser.fileOpened.connect(lambda x: self.openFile(x))
+        self.fileBrowser.fileOpened.connect(lambda x: self.fileOpened.emit(x))
 
     def openFile(self, file):
         self.fileOpened.emit(file)
