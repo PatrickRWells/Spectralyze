@@ -6,26 +6,20 @@ from keckcode.deimos import deimosmask1d
 
 import matplotlib.pyplot as plt
 from remote import Remote
-from plothandler import plotHandler
+from projectHandler import projectHandler
 
 class spectraApp(QApplication):
     def __init__(self):
         super().__init__([])
-        self.activeWindow = startupWindow()
+        self.startupWindow = startupWindow()
+        self.activeWindow = self.startupWindow
         self.connectSignals()
         self.activeWindow.show()
         
     def connectSignals(self):
-        self.activeWindow.newProject.connect(lambda: self.newProject())
-    
-    def handleFileOpen(self, fname):
-        self.startupWindow.close()
-        self.remote = Remote()
-        self.plothandler = plotHandler(fname, self.remote)
-        self.remote.show()
+        self.startupWindow.newProject.connect(lambda: self.newProject())
 
     def newProject(self):
-        self.activeWindow.close()
-        self.activeWindow = projectWindow()
-        self.activeWindow.show()
+        self.projectHandler = projectHandler()
+        self.projectHandler.start()
 

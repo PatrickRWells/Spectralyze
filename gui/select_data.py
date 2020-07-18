@@ -55,7 +55,7 @@ class fileBrowser(QWidget):
         self.openFileNameDialog()
 
     def openFileNameDialog(self):
-        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "", self.types[self.type])
+        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "/Volumes/workspace/Data/reduced/Science", self.types[self.type])
         if fileName:
             self.fileOpened.emit(fileName)
 

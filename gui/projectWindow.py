@@ -2,9 +2,12 @@ from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QFil
 from PyQt5.QtCore import pyqtSignal
 from select_data import fileBrowser
 from remote import Remote
-from plothandler import plotHandler
+from plotHandler import plotHandler
+from PyQt5.QtCore import pyqtSignal
+
 
 class projectWindow(QWidget):
+    fileAdded = pyqtSignal()
     def __init__(self):
         super().__init__()
 
@@ -30,24 +33,15 @@ class projectWindow(QWidget):
         self.resize(100, 300)
         self.connectSignals()
         self.connectSlots()
+    
+    def addFile(self, fname):
+        self.fileList.addItem(fname)
 
     def connectSignals(self):
         pass
 
     def connectSlots(self):
-        self.addButton.pressed.connect(self.fileBrowse)
-
-    def fileBrowse(self):
-        tempWindow = fileBrowser("spectra")
-        tempWindow.fileOpened.connect(lambda x: self.addFile(x))
-        tempWindow.openFile()
-    
-    def addFile(self, fname):
-        self.fileController.append(fname)
-        self.fileList.addItem(fname)
-        self.remote = Remote()
-        self.plotHandler = plotHandler(fname, self.remote)
-        self.remote.show()
+        self.addButton.pressed.connect(lambda: self.fileAdded.emit())
 
 
 class fileListController(list):

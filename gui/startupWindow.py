@@ -1,5 +1,5 @@
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QFileDialog
+from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QFileDialog, QMainWindow
 
 
 class startupWindow(QWidget):
