@@ -1,4 +1,4 @@
-from app import spectraApp
+from appStateModel import appStateModel
 
-app = spectraApp()
+app = appStateModel()
 app.exec_()

@@ -9,37 +9,23 @@ class spectraModel:
         self.fname = fname
         self.mask = deimosmask1d.DeimosMask1d(fname)
         self.numspec = self.mask.nspec
-        self.plot = self.mask.plot(0)
-    
-        self.canvas = figCanvas(self.plot)
         self.zguesses = [0] * self.numspec
-
-    def getPlot(self, index):
-        self.plot.clf()
-        self.mask.plot(index, fig=self.plot)
-        self.canvas.draw()
-    
-    def getSmoothPlot(self, index, smoothing):
-        self.plot.clf()
-        self.mask.smooth(index, smoothing, fig=self.plot)
-        self.canvas.draw()
     
     def updateZGuess(self, index, zguess):
         self.zguesses[index] = zguess
 
     def getZGuess(self, index):
         return self.zguesses[index]
+    
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        del state['mask']
+        return state
+    
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.mask = deimosmask1d.DeimosMask1d(self.fname)
 
-    def updateLines(self, lines, specnum, smooth, smoothing):
-        print(smooth)
-        print(smoothing)
-        if smooth:
-            self.getSmoothPlot(specnum, smoothing)
-        else:
-            self.getPlot(specnum)
-        
-        self.mask.mark_lines(lines, self.zguesses[specnum], specnum, fig=self.plot, usesmooth=smooth)
-        self.canvas.draw()
 
 class figCanvas(FigureCanvas):
     def __init__(self, figure):

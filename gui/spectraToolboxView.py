@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets  import QMainWindow, QApplication, QVBoxLayout, QHBoxLayout, QWidget, QPushButton
+from PyQt5.QtWidgets  import QMainWindow, QApplication, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QSpacerItem, QSizePolicy
 from PyQt5.QtCore import pyqtSignal
 import spectraNavigatorWidgets as widgets
 
@@ -16,10 +16,14 @@ class spectraToolboxView(QWidget):
         self.zGuessTool = widgets.ZGuessTool()
         self.spectralLineTool = widgets.SpectralLineTool()
         self.layout = QVBoxLayout()
-        self.layout.addWidget(self.spectrumNavigator)
+
+        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.layout.addItem(self.verticalSpacer)
+        self.layout.addWidget(self.spectralLineTool)
         self.layout.addWidget(self.smoothTool)
         self.layout.addWidget(self.zGuessTool)
-        self.layout.addWidget(self.spectralLineTool)
+        self.layout.addWidget(self.spectrumNavigator)
+
         self.setLayout(self.layout)
         self.connectSignals()
     
