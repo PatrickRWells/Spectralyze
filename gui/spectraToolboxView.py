@@ -1,51 +1,72 @@
 from PyQt5.QtWidgets  import QMainWindow, QApplication, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QSpacerItem, QSizePolicy
 from PyQt5.QtCore import pyqtSignal
 import spectraNavigatorWidgets as widgets
+from configparser import ConfigParser
+import toml
+from importlib import import_module
+from copy import copy
+from collections import OrderedDict as od
 
 
 class spectraToolboxView(QWidget):
-    nextPressed = pyqtSignal()
-    prevPressed = pyqtSignal()
-    smoothPressed = pyqtSignal(int)
-    undoSmoothPressed = pyqtSignal()
-    zGuessInput = pyqtSignal(float)
-    def __init__(self):
+    CONFIG_FILE = "config/toolbox_view.toml"
+
+    """
+    UI Element for use with spectra views.
+    ------Tools--------
+    Next/Prev buttons
+    Smoothing widget
+    Redshift guess input/display
+    """
+
+    signal = pyqtSignal(dict)
+    
+    def __init__(self, config_type):
         super().__init__()
-        self.spectrumNavigator = widgets.SpectrumNavigatorTool()
-        self.smoothTool = widgets.SmoothingTool()
-        self.zGuessTool = widgets.ZGuessTool()
-        self.spectralLineTool = widgets.SpectralLineTool()
+        self.config_type = config_type
+        self.config = toml.load(self.CONFIG_FILE)
         self.layout = QVBoxLayout()
 
         self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         self.layout.addItem(self.verticalSpacer)
-        self.layout.addWidget(self.spectralLineTool)
-        self.layout.addWidget(self.smoothTool)
-        self.layout.addWidget(self.zGuessTool)
-        self.layout.addWidget(self.spectrumNavigator)
+
+        self.setupWidgets()
+
+
 
         self.setLayout(self.layout)
         self.connectSignals()
+        #for k,v in self.outgoingSignals.items():
+        #    print(k)
+        #    v({"test": 'test'})
+
+    
+    def setupWidgets(self):
+        self.widgets = {}
+        for key, val in self.config['general']['widgets'].items():
+            mod = import_module(key)
+            for name, obj in val.items():
+                if name in self.config[self.config_type]['widgets'].keys():
+                    class_type = getattr(mod, obj)
+                    widget = class_type(self.config[self.config_type]['widgets'][name])
+                    self.widgets.update({name: widget})
+                    self.layout.addWidget(widget)
+                else:
+                    class_type = getattr(mod, obj)
+                    widget = class_type()
+                    self.widgets.update({name: widget})
+                    self.layout.addWidget(widget)
+
+
+
     
     def connectSignals(self):
-        self.spectrumNavigator.nextButton.pressed.connect(lambda: self.nextPressed.emit())
-        self.spectrumNavigator.prevButton.pressed.connect(lambda: self.prevPressed.emit())
-        self.smoothTool.smoothButton.pressed.connect(self.smoothSpectra)
-        self.smoothTool.undoSmooth.pressed.connect(lambda: self.undoSmoothPressed.emit())
-        self.zGuessTool.zGuessBoxEdit.textChanged.connect(self.zGuessChanged)
-    
-    def smoothSpectra(self):
-        smoothing = int(self.smoothTool.smoothBoxEdit.text())
-        self.smoothPressed.emit(smoothing)
-    
-    def zGuessChanged(self):
-        zGuess = self.zGuessTool.zGuessBoxEdit.text()
-        if not zGuess:
-            zGuess = "0"
-        if zGuess[0] == '.':
-            zGuess = '0' + zGuess
-        self.zGuessInput.emit(float(zGuess))
-        
-    def setZ(self, z):
-        self.zGuessTool.zGuessBoxEdit.setText(str(z))
-        self.zGuessTool.zGuessBoxEdit.repaint()
+        for name, widget in self.widgets.items():
+            if hasattr(widget, "signal"):
+                widget.signal.connect(lambda x, y=name: self.test({y: x}))
+
+if __name__ == "__main__":
+    app = QApplication([])
+    window = spectraToolboxView("keckode")
+    window.show()
+    app.exec_()

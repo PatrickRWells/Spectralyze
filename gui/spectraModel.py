@@ -1,36 +1,31 @@
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from keckcode.deimos import deimosmask1d
 import matplotlib.pyplot as plt
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import pyqtSignal, QObject
+import toml
+from importlib import import_module
 
-class spectraModel:
-    def __init__(self, fname):
+
+class abstractSpectraModel:
+    CONFIG_FILE="config/spectra_model.toml"
+    def __init__(self, fname, configtype):
+        self.configtype = configtype
+        self.config = toml.load(self.CONFIG_FILE)
         self.fname = fname
-        self.mask = deimosmask1d.DeimosMask1d(fname)
-        self.numspec = self.mask.nspec
-        self.zguesses = [0] * self.numspec
-    
-    def updateZGuess(self, index, zguess):
-        self.zguesses[index] = zguess
+        self.attributes = {}
+        self.setup()
 
-    def getZGuess(self, index):
-        return self.zguesses[index]
+    def setup(self):
+        for key, val in self.config[self.configtype]['attributes']:
+            if self.config[self.configtype]['type'] == 'multi':
+                self.attributes.update({key: []})
+            else:
+                self.attributes.update({key: val})
     
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        del state['mask']
-        return state
-    
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.mask = deimosmask1d.DeimosMask1d(self.fname)
+    def plot(self, index=0, **kwargs):
+        pass
 
 
-class figCanvas(FigureCanvas):
-    def __init__(self, figure):
-        self.fig = figure
-        super().__init__(self.fig)
 
 if __name__ == "__main__":
     pass
