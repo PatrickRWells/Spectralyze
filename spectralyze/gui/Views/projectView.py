@@ -2,53 +2,46 @@ from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QFil
 from PyQt5.QtCore import pyqtSignal
 from fileBrowse import fileBrowser
 from PyQt5.QtCore import pyqtSignal
-from projectModel import projectModel
+from spectralyze.gui.Models.projectModel import projectModel
 from spectraNavigatorView import spectraNavigatorView
-from os.path import basename
 import datetime
+import os
 
 
 class projectView(QWidget):
+    CONFIG_FILE = os.path.join(os.environ['SPECTRALYZE_CONFIG'], "file_views.toml")
     saveProject = pyqtSignal(str)
     def __init__(self, project):
         super().__init__()
 
         self.model = project
         self.fileBrowser = None
-        self.spectraNavigatorViews = {}
-        self.spectraNavigatorWidget = QStackedWidget()
+        self.fileViews = {}
 
+        self.setupWidgets()
+
+        self.resize(100, 300)
+        self.connectSignals()
+        self.connectSlots()
+    
+
+    def setupWidgets(self):
         self.layout = QHBoxLayout()
         self.leftLayout = QVBoxLayout()
-
+        self.fileViewsWidget = self.model.getWidget()
         self.projectNameLabel = QLabel("Project: {}".format(self.model.name))
         self.saveButton = QPushButton("Save Project")
         self.saveLabel = QLabel("")
-
         self.fileList = fileList(self.model.getFileNames())
-
         self.leftLayout.addWidget(self.projectNameLabel)
         self.leftLayout.addWidget(self.fileList)
         self.leftLayout.addWidget(self.saveButton)
         self.leftLayout.addWidget(self.saveLabel)
         self.layout.addLayout(self.leftLayout)
-        self.layout.addWidget(self.spectraNavigatorWidget)
-
+        self.layout.addWidget(self.fileViewsWidget)
         self.setLayout(self.layout)
-        self.resize(100, 300)
-        self.connectSignals()
-        self.connectSlots()
-        self.loadModel()
-    
-    def loadModel(self):
-        files = self.model.getFileNames()
-        if files:
-            for file in files:
-                self.spectraNavigatorViews.update({file: spectraNavigatorView(self.model.getSpectraModel(file))})
-                self.spectraNavigatorWidget.addWidget(self.spectraNavigatorViews[file])
-            self.spectraNavigatorWidget.setCurrentIndex(0)
 
-    
+
     def connectSignals(self):
         pass
 
@@ -69,21 +62,14 @@ class projectView(QWidget):
         self.model.addFile(fname)
         self.spectraNavigatorViews.update({fname: spectraNavigatorView(self.model.getSpectraModel(fname))})
         self.spectraNavigatorWidget.addWidget(self.spectraNavigatorViews[fname])
-        self.fileList.updateFileList(basename(fname))
+        self.fileList.updateFileList(os.path.basename(fname))
 
     def removeFile(self, fname):
         pass
 
     def setActiveFile(self, name):
-        index = 0
-        for k, v in self.spectraNavigatorViews.items():
-            if name in k:
-                self.spectraNavigatorWidget.setCurrentIndex(index)
-                if not self.spectraNavigatorWidget.isVisible():
-                    self.spectraNavigatorWidget.show()
-                break
-            else:
-                index += 1 
+        self.model.setActive(name)
+
 
     def saveProjectClicked(self):
         time = datetime.datetime.now()
@@ -92,6 +78,7 @@ class projectView(QWidget):
             self.saveLabel.show()
 
         self.saveProject.emit(self.model.name)
+
 
 
 class fileList(QWidget):
@@ -105,7 +92,7 @@ class fileList(QWidget):
         self.list= QListWidget()
         if files is not None:
             for file in files:
-                self.list.addItem(basename(file))
+                self.list.addItem(os.path.basename(file))
         self.layout = QVBoxLayout()
         self.setMinimumHeight(400)
         self.setMinimumWidth(100)
@@ -142,8 +129,12 @@ class fileList(QWidget):
     
 
 if __name__ == "__main__":
+    fname1 = "/Volumes/Workspace/Data/reduced/Science/spec1d_d0721_0057-2209m1_DEIMOS_2017Jul21T091032.880.fits"
+    fname2 = "/Volumes/Workspace/Data/reduced/Science/spec1d_d0721_0058-2209m1_DEIMOS_2017Jul21T094139.725.fits"
     app = QApplication([])
     project = projectModel("Test")
+    project.addFile(fname1, 'keckcode_deimos1d')
+    project.addFile(fname2, 'keckcode_deimos1d')
 
     ProjectView = projectView(project)
     ProjectView.show()

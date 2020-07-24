@@ -1,4 +1,5 @@
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
@@ -35,40 +36,18 @@ class spectraView(QWidget):
 
     """
 
-    def __init__(self, model):
+    def __init__(self, plot):
         super().__init__()
-        self.model = model
-        
-        self.plot = self.model.mask.plot(0)
+        self.plot = plot
+        self.plot.tight_layout()
         self.canvas = figCanvas(self.plot)
         self.toolbar = NavigationToolbar(self.canvas, self)
-        
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.canvas)
         self.layout.addWidget(self.toolbar)
-
         self.setLayout(self.layout)
 
-    def getPlot(self, index):
-        self.plot.clf()
-        self.model.mask.plot(index, fig=self.plot)
-        self.canvas.draw()
-        self.repaint()
-    
-    def getSmoothPlot(self, index, smoothing):
-        self.plot.clf()
-        self.model.mask[index].smooth(smoothing, fig=self.plot)
-        self.canvas.draw()
-        self.repaint()
-
-    def updateLines(self, lines, specnum, smoothing=0):
-        
-        if smoothing != 0:
-            self.getSmoothPlot(specnum, smoothing)
-        else:
-            self.getPlot(specnum)
-        
-        #Note: Plot is cleared and past back to plotting library for reuse
-        self.model.mask.mark_lines(lines, self.model.zguesses[specnum], specnum, fig=self.plot, usesmooth=bool(smoothing))
-        self.canvas.draw()
-
+class figCanvas(FigureCanvas):
+    def __init__(self, figure):
+        self.fig = figure
+        super().__init__(self.fig)

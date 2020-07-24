@@ -1,0 +1,4 @@
+[widgets]
+    [widgets.keckcode_deimos1d]
+    mod="spectraNavigatorView"
+    obj="spectraNavigatorView"

@@ -1,0 +1,13 @@
+[keckcode_deimos1d]
+modulename="keckcode.deimos"
+objname="deimosmask1d"
+type="multi"
+toolbox="keck1d"
+    [keckcode_deimos1d.attributes]
+    zguess="float"
+    [keckcode_deimos1d.tools]
+    SpectrumNavigatorTool.next="nextGraph"
+    SpectrumNavigatorTool.prev="prevGraph"
+    SmoothingTool="smoothGraph"
+    ZGuessTool="zGuessUpdate"
+    LineUpdateTool="linesUpdate"

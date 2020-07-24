@@ -2,6 +2,7 @@ from PyQt5.QtWidgets  import QMainWindow, QApplication, QVBoxLayout, QHBoxLayout
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QIntValidator, QDoubleValidator
 import toml
+import os
 """
     Widgets for use with a spectra view
 
@@ -108,6 +109,11 @@ class ZGuessTool(QWidget):
     
     def connectSignal(self):
         self.zGuessBoxEdit.textChanged.connect(self.updateGuess)
+    
+    def update(self, value):
+        self.zGuessBoxEdit.setText(str(value))
+        self.zGuessBoxEdit.repaint()
+
     def updateGuess(self):
         text = self.zGuessBoxEdit.text()
         if text:
@@ -116,7 +122,7 @@ class ZGuessTool(QWidget):
             self.signal.emit(0)
 
 class LineUpdateTool(QWidget):
-    CONFIG_FILE = "config/spectral_lines.toml"
+    CONFIG_FILE = os.path.join(os.environ['SPECTRALYZE_CONFIG'], "spectral_lines.toml")
     """
     Checkbox widget for drawing spectral in a graph
 

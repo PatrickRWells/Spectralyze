@@ -1,0 +1,4 @@
+[fits]
+    [fits.keckcode_deimos1d]
+        name="Keck Deimos 1D Spectra"
+        file_type="spectra"

@@ -1,0 +1,11 @@
+[general]
+    [general.widgets]
+    import="Widgets.spectraNavigatorWidgets"
+    navigator="SpectrumNavigatorTool"
+    smoothing="SmoothingTool"
+    zguess="ZGuessTool"
+    lineupdate="LineUpdateTool"
+
+[keck1d]
+    [keck1d.widgets]
+    lineupdate = "keckcode"

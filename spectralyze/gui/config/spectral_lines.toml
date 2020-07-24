@@ -1,0 +1,8 @@
+[keckcode]
+name="Spectral Lines"
+    [keckcode.lines]
+    strongem = "Strong Emission"
+    em = "All emission"
+    abs = "Absorption"
+
+
