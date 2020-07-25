@@ -14,7 +14,7 @@ class projectView(QWidget):
     stacked widget that contains the individual file views
     """
     CONFIG_FILE = os.path.join(os.environ['SPECTRALYZE_CONFIG'], "file_views.toml")
-    saveProject = pyqtSignal(str)
+    saveProject = pyqtSignal(projectModel)
     def __init__(self, project):
         super().__init__()
 
@@ -55,19 +55,19 @@ class projectView(QWidget):
 
     def getFile(self):
         if self.fileBrowser is None:
-            self.fileBrowser = fileBrowser("spectra")
+            self.fileBrowser = fileBrowser("spectra") #Currently this is the only type of file
+                                                      #we know how to handle
             self.fileBrowser.fileOpened.connect(lambda x: self.addFile(x))
 
         self.fileBrowser.openFile()
 
-    def addFile(self, fname):
-        self.model.addFile(fname)
-        self.spectraNavigatorViews.update({fname: spectraNavigatorView(self.model.getSpectraModel(fname))})
-        self.spectraNavigatorWidget.addWidget(self.spectraNavigatorViews[fname])
-        self.fileList.updateFileList(os.path.basename(fname))
+    def addFile(self, files):
+        for fname, ftype in files.items():
+            self.model.addFile(fname, ftype)
+            self.fileList.updateFileList(os.path.basename(fname))
 
     def removeFile(self, fname):
-        pass
+        self.model.removeFile(fname)
 
     def setActiveFile(self, name):
         self.model.setActive(name)
@@ -79,7 +79,7 @@ class projectView(QWidget):
         if not self.saveLabel.isVisible():
             self.saveLabel.show()
 
-        self.saveProject.emit(self.model.name)
+        self.saveProject.emit(self.model)
 
 
 
@@ -118,12 +118,19 @@ class fileList(QWidget):
 
     def connectSignals(self):
         self.addButton.clicked.connect(lambda: self.addFile.emit())
-        self.removeButton.clicked.connect(lambda x: self.removeFile.emit(x))
+        self.removeButton.clicked.connect(self.fileRemoveClicked)
         self.list.itemSelectionChanged.connect(self.updateSelection)
 
     def updateFileList(self, file):
         self.list.addItem(file)
         self.update()
+
+    def fileRemoveClicked(self):
+        item = self.list.currentItem()
+        row = self.list.currentRow()
+        self.list.takeItem(row)
+        self.update()
+        self.removeFile.emit(item.text())
 
     def updateSelection(self):
         selection = self.list.currentItem()

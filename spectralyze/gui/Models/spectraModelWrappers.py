@@ -25,12 +25,13 @@ class deimos1DSpectra(abstractSpectraModel):
     def __init__(self, fname):
         super().__init__(fname, "keckcode_deimos1d")
         self.mask = deimosmask1d.DeimosMask1d(self.fname)
-        self.plot = self.mask.plot(0)
+        self.keys = list(self.mask.keys())
+        self.plot = self.mask.plot(self.keys[0])
         self.nspec = self.mask.nspec
         self.curspec = 0
         self.cursmooth = 0
         self.attributes['zguess'] = self.nspec*[0.0]
-    
+
     def update(self, data):
         for key, value in data.items():
             if key == 'navigator':
@@ -59,7 +60,7 @@ class deimos1DSpectra(abstractSpectraModel):
         self.widgetHeight = 600
         self.widgetWidth = 800
         self.widget.setMinimumSize(self.widgetWidth, self.widgetHeight)
-        
+
         return self.widget
 
     def updateLabel(self):
@@ -68,10 +69,10 @@ class deimos1DSpectra(abstractSpectraModel):
 
     def plotGraph(self, index):
         self.plot.clf()
-        self.mask.plot(index, fig=self.plot)
+        self.mask.plot(self.keys[index], fig=self.plot)
         self.spectraView.canvas.draw()
         self.updateLabel()
-        self.widget.repaint()    
+        self.widget.repaint()
 
     def nextGraph(self, **kwargs):
         if self.curspec < self.nspec - 1:
@@ -93,7 +94,7 @@ class deimos1DSpectra(abstractSpectraModel):
             self.plotGraph(self.curspec)
         else:
             self.plot.clf()
-            self.mask[self.curspec].smooth(smoothing, fig=self.plot)
+            self.mask.smooth(self.keys[self.curspec], smoothing, fig=self.plot)
             self.spectraView.canvas.draw()
             self.widget.repaint()
 
@@ -102,19 +103,19 @@ class deimos1DSpectra(abstractSpectraModel):
             self.smoothGraph(self.cursmooth)
         else:
             self.plotGraph(self.curspec)
-        
-        self.mask.mark_lines(lines, self.attributes['zguess'][self.curspec], self.curspec, fig=self.plot, usesmooth=self.cursmooth)
+
+        self.mask.mark_lines(self.keys[self.curspec], self.attributes['zguess'][self.curspec], lines, fig=self.plot, usesmooth=self.cursmooth)
         self.spectraView.canvas.draw()
 
     def zGuessUpdate(self, zguess, **kwargs):
         self.attributes['zguess'][self.curspec] = zguess
 
-    
+
     def __getstate__(self):
         state = self.__dict__.copy()
         del state['mask']
         return state
-    
+
     def __setstate__(self, state):
         self.__dict__.update(state)
         self.mask = deimosmask1d.DeimosMask1d(self.fname)
@@ -125,5 +126,3 @@ def getSpectraModel(fname, config_type):
     mod = import_module('spectralyze.gui.Models.spectraModelWrappers')
     atr = getattr(mod, config[config_type]['obj'])
     return(atr(fname))
-
-

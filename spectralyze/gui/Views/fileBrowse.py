@@ -1,8 +1,8 @@
-from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QFileDialog
+from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QFileDialog, QHBoxLayout
 from PyQt5.QtCore import pyqtSignal
 
 class dataSelectWindow(QWidget):
-    fileOpened = pyqtSignal(str)
+    fileOpened = pyqtSignal(dict)
     def __init__(self):
         super().__init__()
         self.fileBrowser = fileBrowser('spectra')
@@ -36,7 +36,7 @@ class fileBrowser(QWidget):
         'general': "All Files (*)",
         'spectra': "Fits Files (*.fits)"
     }
-    fileOpened = pyqtSignal(str)
+    fileOpened = pyqtSignal(dict)
     def __init__(self, type):
         super().__init__()
 
@@ -57,7 +57,15 @@ class fileBrowser(QWidget):
     def openFileNameDialog(self):
         fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "/Volumes/workspace/Data/reduced/Science", self.types[self.type])
         if fileName:
-            self.fileOpened.emit(fileName)
+            if self.type == 'spectra':
+                self.fileOpened.emit({fileName: 'keckcode_deimos1d'})
+                #For now, this is the only type of file we have a configuration for
+
+    
+
+class fileTypeSelector(QWidget):
+    def __init__(self):
+        pass
 
 class openSpecButton(QPushButton):
     def __init__(self):

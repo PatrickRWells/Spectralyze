@@ -13,6 +13,7 @@ class projectModel:
         self.fileWidgets = {}
         self.fileConfigs = {}
         self.config = toml.load(self.CONFIG_FILE)
+        self.widget = None
         self.saveLocation = ""
         self.name = name
 
@@ -22,6 +23,16 @@ class projectModel:
         else:
             self.fileModels.update({fname: getFileModel(fname, 'spectra', config_type)})
             self.fileConfigs.update({fname: config_type})
+            if self.widget:
+                self.updateWidget()
+    
+    def removeFile(self, fname):
+        if fname in self.fileModels.keys():
+            model = self.fileModels.pop(fname)
+            self.fileConfigs.pop(fname)
+            self.updateWidget(remove=fname)
+            del model
+        
 
     def getFileNames(self):
         return self.fileModels.keys()
@@ -41,6 +52,24 @@ class projectModel:
             self.fileWidgets.update({fname: widget})
             self.widget.addWidget(widget)
         return self.widget
+    
+    def updateWidget(self, remove = None):
+        if remove:
+            widget = self.fileWidgets.pop(remove)
+            self.widget.remove(widget)
+            if self.fileWidgets.keys():
+                self.setActive(list(self.fileWidgets.keys())[0])
+            del widget
+
+
+        for fname, model in self.fileModels.items():
+            if fname not in self.fileWidgets.keys():
+                widget = self.getFileWidget(fname)
+                self.fileWidgets.update({fname: widget})
+                self.widget.addWidget(widget)
+                self.widget.update()
+            
+
     
     def setActive(self, fname):
         for key, val in self.fileWidgets.items():
