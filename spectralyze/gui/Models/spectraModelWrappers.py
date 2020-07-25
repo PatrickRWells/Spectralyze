@@ -7,8 +7,21 @@ import os
 import toml
 from importlib import import_module
 
+"""
+Conains wrappers for various backends for data display and management
+class needs to be included in the appropriate entry in the various config
+files for the code to be able to use it.
+
+
+
+"""
+
 
 class deimos1DSpectra(abstractSpectraModel):
+    """
+    1D Deimos spectra, as implemented in:
+    https://github.com/cdfassnacht/keckcode
+    """
     def __init__(self, fname):
         super().__init__(fname, "keckcode_deimos1d")
         self.mask = deimosmask1d.DeimosMask1d(self.fname)

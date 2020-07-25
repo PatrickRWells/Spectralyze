@@ -39,7 +39,6 @@ class spectraView(QWidget):
     def __init__(self, plot):
         super().__init__()
         self.plot = plot
-        self.plot.tight_layout()
         self.canvas = figCanvas(self.plot)
         self.toolbar = NavigationToolbar(self.canvas, self)
         self.layout = QVBoxLayout()
