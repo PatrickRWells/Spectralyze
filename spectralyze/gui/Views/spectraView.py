@@ -14,25 +14,9 @@ import sys
 
 class spectraView(QWidget):
     """
-    Widget for displaying a spectra
-
-    Methods:
-        getPlot(int): Draws a plot at the given index
-        getSmoothPlot(int, int): Gets plot at given index
-                                 with smoothing by second value
-        updateLines(lines, specnum, smooth, smoothing)
-            Draws spectral lines on a given plot
-
-            lines: dictionary with entries {lineid: bool}
-            specnum: spectra to draw the line on (index)
-            smoothing: amount of smoothing, 0 for none
-
-    Attributes:
-        model: spectra model object
-        plot: displayed plot, reused to redraw
-        canvas: UI element for holding plot
-        toolbar: Toolbar UI for plot interaction
-
+    Widget for displaying a spectra plot
+    Doesn't actually know anything about how the plot works
+    Just displays it
 
     """
 

@@ -1,16 +1,16 @@
-    
+
 from PyQt5.QtWidgets  import QMainWindow, QApplication, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QSizePolicy, QLabel
 from PyQt5 import QtCore
 from spectralyze.gui.Models.spectraModelWrappers import deimos1DSpectra
 from spectralyze.gui.Views.spectraToolboxView import spectraToolboxView
 import sys
-import os 
+import os
 from time import sleep
 import toml
 
 class spectraNavigatorView(QWidget):
     """
-    A widget for displaying a spectrum
+    A widget for displaying a spectrum and associate navigator widgets
     """
     CONFIG_FILE = os.path.join(os.environ['SPECTRALYZE_CONFIG'], "spectra_navigator.toml")
     def __init__(self, model, config_type):
@@ -36,5 +36,3 @@ class spectraNavigatorView(QWidget):
         self.layout.addWidget(self.toolboxView)
         self.model.connectToolbox(self.toolboxView)
         self.setLayout(self.layout)
-
-

@@ -9,6 +9,10 @@ import os
 
 
 class projectView(QWidget):
+    """
+    A Widget for displaying a project. Contains a list of files and a
+    stacked widget that contains the individual file views
+    """
     CONFIG_FILE = os.path.join(os.environ['SPECTRALYZE_CONFIG'], "file_views.toml")
     saveProject = pyqtSignal(str)
     def __init__(self, project):
@@ -19,11 +23,9 @@ class projectView(QWidget):
         self.fileViews = {}
 
         self.setupWidgets()
-
-        self.resize(100, 300)
         self.connectSignals()
         self.connectSlots()
-    
+
 
     def setupWidgets(self):
         self.layout = QHBoxLayout()
@@ -54,8 +56,8 @@ class projectView(QWidget):
     def getFile(self):
         if self.fileBrowser is None:
             self.fileBrowser = fileBrowser("spectra")
-            self.fileBrowser.fileOpened.connect(lambda x: self.addFile(x)) 
-        
+            self.fileBrowser.fileOpened.connect(lambda x: self.addFile(x))
+
         self.fileBrowser.openFile()
 
     def addFile(self, fname):
@@ -82,11 +84,11 @@ class projectView(QWidget):
 
 
 class fileList(QWidget):
-    
+
     addFile = pyqtSignal()
     removeFile = pyqtSignal(str)
     currentFileChanged = pyqtSignal(str)
-    
+
     def __init__(self, files=None):
         super().__init__()
         self.list= QListWidget()
@@ -113,29 +115,16 @@ class fileList(QWidget):
 
         self.setLayout(self.layout)
         self.connectSignals()
-    
+
     def connectSignals(self):
         self.addButton.clicked.connect(lambda: self.addFile.emit())
         self.removeButton.clicked.connect(lambda x: self.removeFile.emit(x))
         self.list.itemSelectionChanged.connect(self.updateSelection)
-    
+
     def updateFileList(self, file):
         self.list.addItem(file)
         self.update()
-    
+
     def updateSelection(self):
         selection = self.list.currentItem()
         self.currentFileChanged.emit(selection.text())
-    
-
-if __name__ == "__main__":
-    fname1 = "/Volumes/Workspace/Data/reduced/Science/spec1d_d0721_0057-2209m1_DEIMOS_2017Jul21T091032.880.fits"
-    fname2 = "/Volumes/Workspace/Data/reduced/Science/spec1d_d0721_0058-2209m1_DEIMOS_2017Jul21T094139.725.fits"
-    app = QApplication([])
-    project = projectModel("Test")
-    project.addFile(fname1, 'keckcode_deimos1d')
-    project.addFile(fname2, 'keckcode_deimos1d')
-
-    ProjectView = projectView(project)
-    ProjectView.show()
-    app.exec_()

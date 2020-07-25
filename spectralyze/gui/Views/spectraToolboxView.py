@@ -12,15 +12,16 @@ class spectraToolboxView(QWidget):
     CONFIG_FILE = os.path.join(os.environ['SPECTRALYZE_CONFIG'], "toolbox_view.toml")
 
     """
-    UI Element for use with spectra views.
+    UI Element for use with data views.
     ------Tools--------
-    Next/Prev buttons
-    Smoothing widget
-    Redshift guess input/display
+    Which widgets to display are determined by the appropriate config type
+    Which should be one of hte configs laid out in the toolbox_view config file
+    The signal will emit a dictionary the tool name as key, and a dictionary
+    with the data as a value
     """
 
     signal = pyqtSignal(dict)
-    
+
     def __init__(self, config_type):
         super().__init__()
         print(self.CONFIG_FILE)
@@ -35,7 +36,7 @@ class spectraToolboxView(QWidget):
         self.setLayout(self.layout)
         self.connectSignals()
 
-    
+
     def setupWidgets(self):
         self.widgets = {}
         mod = None
@@ -52,21 +53,14 @@ class spectraToolboxView(QWidget):
                 widget = class_type()
                 self.widgets.update({key: widget})
                 self.layout.addWidget(widget)
-    
+
     def connectSignals(self):
+
         for name, widget in self.widgets.items():
             if hasattr(widget, "signal"):
                 widget.signal.connect(lambda x, y=name: self.signal.emit({y: x}))
-    
+
     def update(self, data):
         for key, value in data.items():
             if key in self.widgets.keys():
                 self.widgets[key].update(value)
-
-
-
-if __name__ == "__main__":
-    app = QApplication([])
-    window = spectraToolboxView("keck1d")
-    window.show()
-    app.exec_()
