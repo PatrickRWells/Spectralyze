@@ -52,7 +52,3 @@ class abstractSpectraModel(fileModel):
 
     def forceToolboxUpdate(self):
         pass
-
-
-if __name__ == "__main__":
-    pass
