@@ -8,11 +8,11 @@ other types of spectra.
 Since this projcet is very early in its development, it is recommended you
 install with pip in development mode:
 
-'''
+```
 git pull https://github.com/PatrickRWells/Spectralyze.git
 cd spectralyze
 pip install -e .
-'''
+```
 
 This way updating the code will be as easy as pulling the new version from
 GitHub
@@ -32,4 +32,4 @@ cdfutils: https://github.com/cdfassnacht/cdfutils
 
 Run the following command in your terminal:
 
-'''spectralyze_gui'''
+```spectralyze_gui```
