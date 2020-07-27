@@ -1,0 +1,3 @@
+from spectralyze.app import launch_gui
+
+launch_gui()
