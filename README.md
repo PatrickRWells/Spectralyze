@@ -21,10 +21,9 @@ GitHub
 
 This requirements need to be installed before installing Spectralyze
 
-keckode: https://github.com/cdfassnacht/keckcode
-specim: https://github.com/cdfassnacht/specim
-cdfutils: https://github.com/cdfassnacht/cdfutils
-
+keckode: https://github.com/cdfassnacht/keckcode<br>
+specim: https://github.com/cdfassnacht/specim<br>
+cdfutils: https://github.com/cdfassnacht/cdfutils<br>
 
 ##
 
