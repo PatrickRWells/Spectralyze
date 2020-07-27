@@ -1,9 +1,8 @@
 from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog, QListWidget, QToolButton, QLabel, QApplication, QStackedWidget, QSizePolicy
 from PyQt5.QtCore import pyqtSignal
-from fileBrowse import fileBrowser
 from PyQt5.QtCore import pyqtSignal
 from spectralyze.gui.Models.projectModel import projectModel
-from spectraNavigatorView import spectraNavigatorView
+from spectralyze.gui.Views.fileBrowse import fileBrowser
 import datetime
 import os
 
@@ -13,11 +12,12 @@ class projectView(QWidget):
     A Widget for displaying a project. Contains a list of files and a
     stacked widget that contains the individual file views
     """
-    CONFIG_FILE = os.path.join(os.environ['SPECTRALYZE_CONFIG'], "file_views.toml")
-    saveProject = pyqtSignal(projectModel)
-    def __init__(self, project):
+    saveProject = pyqtSignal()
+    def __init__(self, project, global_config):
         super().__init__()
-
+        self.global_config = global_config
+        self.CONFIG_FILE = os.path.join(self.global_config['config_location'], 
+                                    self.global_config['projectView'])
         self.model = project
         self.fileBrowser = None
         self.fileViews = {}
@@ -79,7 +79,7 @@ class projectView(QWidget):
         if not self.saveLabel.isVisible():
             self.saveLabel.show()
 
-        self.saveProject.emit(self.model)
+        self.saveProject.emit()
 
 
 

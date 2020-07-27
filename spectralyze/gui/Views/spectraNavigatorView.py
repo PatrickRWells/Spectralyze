@@ -12,9 +12,11 @@ class spectraNavigatorView(QWidget):
     """
     A widget for displaying a spectrum and associate navigator widgets
     """
-    CONFIG_FILE = os.path.join(os.environ['SPECTRALYZE_CONFIG'], "spectra_navigator.toml")
-    def __init__(self, model, config_type):
+    def __init__(self, model, config_type, global_config):
         super().__init__()
+        self.global_config = global_config
+        self.CONFIG_FILE = os.path.join(self.global_config['config_location'],
+                                        self.global_config['spectraNavigatorView'])
         self.model = model
         self.modelWidget = model.getWidget()
         self.config_type = config_type
@@ -23,7 +25,7 @@ class spectraNavigatorView(QWidget):
         self.setupWidgets()
 
     def setupConfig(self):
-        self.toolboxView = spectraToolboxView(self.config[self.config_type]['toolbox'])
+        self.toolboxView = spectraToolboxView(self.config[self.config_type]['toolbox'], self.global_config)
 
     def setupWidgets(self):
         """
@@ -35,4 +37,5 @@ class spectraNavigatorView(QWidget):
         self.layout.addWidget(self.modelWidget)
         self.layout.addWidget(self.toolboxView)
         self.model.connectToolbox(self.toolboxView)
+        self.model.forceToolboxUpdate()
         self.setLayout(self.layout)

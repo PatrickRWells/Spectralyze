@@ -1,11 +1,12 @@
 from keckcode.deimos import deimosmask1d
 from spectralyze.gui.Models.spectraModel import abstractSpectraModel
 from spectralyze.gui.Views.spectraView import spectraView
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QApplication
 from PyQt5 import QtCore
 import os
 import toml
 from importlib import import_module
+import matplotlib.pyplot as plt
 
 """
 Conains wrappers for various backends for data display and management
@@ -22,16 +23,17 @@ class deimos1DSpectra(abstractSpectraModel):
     1D Deimos spectra, as implemented in:
     https://github.com/cdfassnacht/keckcode
     """
-    def __init__(self, fname):
-        super().__init__(fname, "keckcode_deimos1d")
+    def __init__(self, fname, global_config):
+        super().__init__(fname, "keckcode_deimos1d", global_config)
         self.mask = deimosmask1d.DeimosMask1d(self.fname)
         self.keys = list(self.mask.keys())
-        self.plot = self.mask.plot(self.keys[0])
+        self.plot = plt.figure(dpi=50)
+        self.plot = self.mask.plot(self.keys[0], fig=self.plot)
         self.nspec = self.mask.nspec
         self.curspec = 0
         self.cursmooth = 0
         self.attributes['zguess'] = self.nspec*[0.0]
-
+    
     def update(self, data):
         for key, value in data.items():
             if key == 'navigator':
@@ -110,19 +112,14 @@ class deimos1DSpectra(abstractSpectraModel):
     def zGuessUpdate(self, zguess, **kwargs):
         self.attributes['zguess'][self.curspec] = zguess
 
-
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        del state['mask']
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.mask = deimosmask1d.DeimosMask1d(self.fname)
+    def forceToolboxUpdate(self):
+        self.toolbox.update({'zguess': self.attributes['zguess'][self.curspec]})
 
 
-def getSpectraModel(fname, config_type):
-    config = toml.load(os.path.join(os.environ['SPECTRALYZE_CONFIG'], 'model_getters.toml'))
+def getSpectraModel(fname, config_type, global_config):
+    config_location = os.path.join(global_config['config_location'],
+                                    global_config['getSpectraModel'])
+    config = toml.load(config_location)
     mod = import_module('spectralyze.gui.Models.spectraModelWrappers')
     atr = getattr(mod, config[config_type]['obj'])
-    return(atr(fname))
+    return(atr(fname, global_config))

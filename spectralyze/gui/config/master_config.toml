@@ -1,0 +1,8 @@
+config_location = "/Users/patrick/code/spectra_code/dev/spectralyze/spectralyze/gui/config/"
+projectModel = "project_models.toml"
+projectView = "file_views.toml"
+spectraModel = "spectra_model.toml"
+getSpectraModel = "model_getters.toml"
+spectraNavigatorView = "spectra_navigator.toml"
+spectraToolboxView = "toolbox_view.toml"
+lineUpdateTool = "spectral_lines.toml"

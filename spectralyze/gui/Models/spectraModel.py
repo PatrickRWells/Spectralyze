@@ -11,15 +11,19 @@ class abstractSpectraModel(fileModel):
     """
     An abstract class for handling spectra objects
     """
-    CONFIG_FILE = os.path.join(os.environ['SPECTRALYZE_CONFIG'],"spectra_model.toml")
-    def __init__(self, fname, config_type):
+    def __init__(self, fname, config_type, global_config):
+
+        self.global_config = global_config
+        self.CONFIG_FILE = os.path.join(self.global_config['config_location'],
+                                        self.global_config['spectraModel'])
         self.config_type = config_type
         self.config = toml.load(self.CONFIG_FILE)
         self.toolbox = None
         self.fname = fname
         self.attributes = {}
-        self.setup()
-    
+        self.setup()        
+        
+
     def getWidget(self):
         """
         Get a QWidget for viewing data
@@ -28,10 +32,7 @@ class abstractSpectraModel(fileModel):
 
     def setup(self):        
         for key, val in self.config[self.config_type]['attributes'].items():
-            if self.config[self.config_type]['type'] == 'multi':
-                self.attributes.update({key: []})
-            else:
-                self.attributes.update({key: val})
+            self.attributes.update({key: val})
         
         self.toolbox = self.config[self.config_type]['toolbox']
     
@@ -47,7 +48,9 @@ class abstractSpectraModel(fileModel):
 
     def connectToolbox(self, toolbox):
         self.toolbox = toolbox
-        self.toolbox.signal.connect(lambda x: self.update(x))  
+        self.toolbox.signal.connect(lambda x: self.update(x))
+
+    def forceToolboxUpdate(self):
         pass
 
 

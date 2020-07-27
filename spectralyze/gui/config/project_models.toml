@@ -1,4 +1,4 @@
 [widgets]
     [widgets.keckcode_deimos1d]
-    mod="spectraNavigatorView"
+    mod="spectralyze.gui.Views.spectraNavigatorView"
     obj="spectraNavigatorView"

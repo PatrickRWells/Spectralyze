@@ -122,7 +122,6 @@ class ZGuessTool(QWidget):
             self.signal.emit(0)
 
 class LineUpdateTool(QWidget):
-    CONFIG_FILE = os.path.join(os.environ['SPECTRALYZE_CONFIG'], "spectral_lines.toml")
     """
     Checkbox widget for drawing spectral in a graph
 
@@ -134,8 +133,11 @@ class LineUpdateTool(QWidget):
 
     """
     signal = pyqtSignal(dict)
-    def __init__(self, config_type):
+    def __init__(self, config_type, global_config):
         super().__init__()    
+        self.global_config = global_config
+        self.CONFIG_FILE = os.path.join(self.global_config['config_location'], 
+                                        self.global_config['lineUpdateTool'])
         self.config_type = config_type
         self.config = toml.load(self.CONFIG_FILE)
 
@@ -169,16 +171,3 @@ class LineUpdateTool(QWidget):
     def reset(self):
         for widget in self.checkBoxWidgets.keys():
             widget.setChecked(False)
-
-
-
-if __name__ == "__main__":
-    config = toml.load("config/spectral_lines.toml")
-    app = QApplication([])
-    window = LineUpdateTool("Spectral Lines", config['keckcode']['lines'])
-    window.show()
-    window.linesUpdate.connect(lambda x: print(x))
-
-    app.exec_()
-
-    print(config)

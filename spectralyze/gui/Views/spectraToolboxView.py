@@ -1,6 +1,5 @@
 from PyQt5.QtWidgets  import QMainWindow, QApplication, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QSpacerItem, QSizePolicy
 from PyQt5.QtCore import pyqtSignal
-import Widgets.spectraNavigatorWidgets as widgets
 from configparser import ConfigParser
 import toml
 from importlib import import_module
@@ -9,7 +8,6 @@ from collections import OrderedDict as od
 import os
 
 class spectraToolboxView(QWidget):
-    CONFIG_FILE = os.path.join(os.environ['SPECTRALYZE_CONFIG'], "toolbox_view.toml")
 
     """
     UI Element for use with data views.
@@ -22,9 +20,11 @@ class spectraToolboxView(QWidget):
 
     signal = pyqtSignal(dict)
 
-    def __init__(self, config_type):
+    def __init__(self, config_type, global_config):
         super().__init__()
-        print(self.CONFIG_FILE)
+        self.CONFIG_FILE = os.path.join(global_config['config_location'], 
+                                   global_config['spectraToolboxView'])
+        self.global_config = global_config
         self.config_type = config_type
         self.config = toml.load(self.CONFIG_FILE)
         self.layout = QVBoxLayout()
@@ -45,7 +45,7 @@ class spectraToolboxView(QWidget):
                 mod = import_module(val)
             elif key in self.config[self.config_type]['widgets'].keys():
                 class_type = getattr(mod, val)
-                widget = class_type(self.config[self.config_type]['widgets'][key])
+                widget = class_type(self.config[self.config_type]['widgets'][key], self.global_config)
                 self.widgets.update({key: widget})
                 self.layout.addWidget(widget)
             else:
