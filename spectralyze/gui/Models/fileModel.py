@@ -5,7 +5,10 @@ class fileModel:
         pass
 
     def __setstate__(self, state):
-        print(state)
+        pass
+
+    def updateAttributes(self, attributes):
+        pass
 
 
 def getFileModel(fname, type, config_type, global_config):

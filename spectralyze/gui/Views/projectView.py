@@ -11,6 +11,13 @@ class projectView(QWidget):
     """
     A Widget for displaying a project. Contains a list of files and a
     stacked widget that contains the individual file views
+    
+    attributes
+    -------------
+    model: Project model
+    fileBrowser: File browser. Only instantiated if needed
+    fileViews: Dictionary of individual file widgets
+    
     """
     saveProject = pyqtSignal()
     def __init__(self, project, global_config):
@@ -28,6 +35,11 @@ class projectView(QWidget):
 
 
     def setupWidgets(self):
+        """
+        Basic layout includes an editable list of files
+        And the stacked widget containing individual file views.
+        """
+
         self.layout = QHBoxLayout()
         self.leftLayout = QVBoxLayout()
         self.fileViewsWidget = self.model.getWidget()

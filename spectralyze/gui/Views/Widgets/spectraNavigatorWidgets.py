@@ -1,5 +1,6 @@
-from PyQt5.QtWidgets  import QMainWindow, QApplication, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QLineEdit, QLabel, QCheckBox
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtWidgets  import (QMainWindow, QApplication, QVBoxLayout, QHBoxLayout, QWidget, 
+                              QPushButton, QLineEdit, QLabel, QCheckBox, QComboBox, QSlider)
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QIntValidator, QDoubleValidator
 import toml
 import os
@@ -13,7 +14,7 @@ import os
 class SpectrumNavigatorTool(QWidget):
         """
 
-        next/previous buttons
+        next/previous buttons, jump tool
 
         """
         signal = pyqtSignal(str)
@@ -22,12 +23,21 @@ class SpectrumNavigatorTool(QWidget):
             super().__init__()
             self.prevButton = QPushButton('Previous')
             self.nextButton = QPushButton('Next')
+            self.slider = QSlider(Qt.Horizontal)
+            self.sliderLabel = QLabel("Jump To")
 
-            self.layout = QHBoxLayout()
-
-            self.layout.addWidget(self.prevButton)
-            self.layout.addWidget(self.nextButton)
+            self.upperLayout = QHBoxLayout()
+            self.lowerLayout = QHBoxLayout()
             
+            self.layout = QVBoxLayout()
+
+            self.lowerLayout.addWidget(self.prevButton)
+            self.lowerLayout.addWidget(self.nextButton)
+            self.upperLayout.addWidget(self.sliderLabel)
+            self.upperLayout.addWidget(self.slider)        
+            self.layout.addLayout(self.upperLayout)
+            self.layout.addLayout(self.lowerLayout)
+
             self.setLayout(self.layout)
             self.connectSlots()
 
@@ -84,7 +94,7 @@ class ZGuessTool(QWidget):
     """
     Tool for inputting or display a redshift guess
     """
-    signal = pyqtSignal(float)
+    signal = pyqtSignal(dict)
     def __init__(self):
         super().__init__()
         self.zGuessLabel = QLabel("Z Guess")
@@ -93,10 +103,14 @@ class ZGuessTool(QWidget):
         self.zGuessEnforce = QDoubleValidator()
         self.zGuessBoxEdit.setValidator(self.zGuessEnforce)
         self.zGuessBoxEdit.setFixedWidth(50)
-
+        self.confidenceWidget = QComboBox()
+        self.confidenceWidget.addItems(['', 'High', 'Medium', 'Low'])
+        self.confidenceLabel = QLabel("Confidence")
         self.layout = QHBoxLayout()
         self.layout.addWidget(self.zGuessLabel)
         self.layout.addWidget(self.zGuessBoxEdit)
+        self.layout.addWidget(self.confidenceLabel)
+        self.layout.addWidget(self.confidenceWidget)
         self.connectSignal()
         self.setLayout(self.layout)
     
@@ -109,17 +123,31 @@ class ZGuessTool(QWidget):
     
     def connectSignal(self):
         self.zGuessBoxEdit.textChanged.connect(self.updateGuess)
+        self.confidenceWidget.currentTextChanged.connect(self.updateConfidence)
     
-    def update(self, value):
-        self.zGuessBoxEdit.setText(str(value))
-        self.zGuessBoxEdit.repaint()
+    def update(self, data):
+        for name, value in data.items():
+            if name == "zguess":
+                self.zGuessBoxEdit.setText(str(value))
+                self.zGuessBoxEdit.repaint()
+            elif name == "confidence":
+                if value:
+                    self.confidenceWidget.setCurrentText(value)
+                else:
+                    self.confidenceWidget.setCurrentIndex(0)
+                self.confidenceWidget.repaint()
 
     def updateGuess(self):
         text = self.zGuessBoxEdit.text()
         if text:
-            self.signal.emit(float(text))
+            self.signal.emit({'guess': float(text)})
         else:
-            self.signal.emit(0)
+            self.signal.emit({'guess': 0})
+    
+    def updateConfidence(self):
+        text = self.confidenceWidget.currentText()
+        self.signal.emit({'confidence': text})
+
 
 class LineUpdateTool(QWidget):
     """
@@ -171,3 +199,84 @@ class LineUpdateTool(QWidget):
     def reset(self):
         for widget in self.checkBoxWidgets.keys():
             widget.setChecked(False)
+
+class modelTool(QWidget):
+    """
+    Tool for drawing a model spectra on top of the data.
+    Currently this is very slow, so will not be included in main version
+    """
+    CONFIG_FILE = "/Users/patrick/code/spectra_code/dev/spectralyze/spectralyze/utils/config/spectra_model.toml"
+    signal = pyqtSignal(dict)
+    def __init__(self):
+        super().__init__()
+        self.config = toml.load(self.CONFIG_FILE)
+        self.spectra = self.config['spectra'].keys()
+        self.layout = QVBoxLayout()
+        self.setupWidgets()
+        self.connectSlots()
+    
+    def setupWidgets(self):
+        self.label = QLabel("Model Spectra")
+        self.slider = QSlider(Qt.Horizontal)
+        self.slider.setRange(0,1000)
+        self.slider.setTracking(True)
+        self.slider.setValue(250)
+        self.comboBox = QComboBox()
+        self.comboBox.addItem("none")
+        for item in self.spectra:
+            self.comboBox.addItem(item)
+        self.lowerLayout = QHBoxLayout()
+        self.label1 = QLabel("0.0")
+        self.label2 = QLabel("2.0")
+        self.label3 = QLabel("Redshift: {}".format(0.5))
+        self.lowerLayout.addWidget(self.label1)
+        self.lowerLayout.addWidget(self.slider)
+        self.lowerLayout.addWidget(self.label2)
+        self.lowestLayout = QHBoxLayout()
+
+        self.button1 = QPushButton("<<<")
+        self.button2 = QPushButton(">>>")
+        self.lowestLayout.addWidget(self.button1)
+        self.lowestLayout.addWidget(self.button2)
+
+        self.layout.addWidget(self.label)
+        self.layout.addWidget(self.comboBox)
+        self.layout.addWidget(self.label3)
+        self.layout.addLayout(self.lowerLayout)
+        self.layout.addLayout(self.lowestLayout)
+        self.setLayout(self.layout)
+    
+    def connectSlots(self):
+        self.button1.clicked.connect(self.decrease)
+        self.button2.clicked.connect(self.increase)
+        self.slider.valueChanged.connect(self.track)
+        self.slider.sliderReleased.connect(self.update)
+        self.comboBox.currentIndexChanged.connect(self.update)
+
+    def increase(self):
+        val = self.slider.value()
+        if val < 1000:
+            self.slider.setValue(val + 1)
+            self.slider.repaint()
+            self.update()
+    def decrease(self):
+        val = self.slider.value()
+        if val > 0:
+            self.slider.setValue(val-1)
+            self.slider.repaint()
+            self.update()
+
+    def update(self):
+        val = self.slider.value()
+        self.label3.setText("Redshift: {}".format(round(val*0.002, 3)))
+        self.label3.repaint()
+        if self.comboBox.currentIndex() != 0:
+            text = self.comboBox.currentText()
+            self.signal.emit({'spectra': text, "z": val*0.002})
+
+
+    def track(self):
+        val = self.slider.value()
+        self.label3.setText("Redshift: {}".format(round(val*0.002, 3)))
+        self.label3.repaint()
+

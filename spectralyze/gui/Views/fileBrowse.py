@@ -2,6 +2,10 @@ from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QFileDialog, QHBo
 from PyQt5.QtCore import pyqtSignal
 
 class dataSelectWindow(QWidget):
+    """
+    A basic file browser
+    There is a lot to be done here.
+    """
     fileOpened = pyqtSignal(dict)
     def __init__(self):
         super().__init__()
