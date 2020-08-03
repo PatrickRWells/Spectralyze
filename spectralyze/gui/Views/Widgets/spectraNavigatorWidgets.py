@@ -17,33 +17,64 @@ class SpectrumNavigatorTool(QWidget):
         next/previous buttons, jump tool
 
         """
-        signal = pyqtSignal(str)
+        signal = pyqtSignal(dict)
 
         def __init__(self):
             super().__init__()
-            self.prevButton = QPushButton('Previous')
-            self.nextButton = QPushButton('Next')
-            self.slider = QSlider(Qt.Horizontal)
-            self.sliderLabel = QLabel("Jump To")
+
+
 
             self.upperLayout = QHBoxLayout()
             self.lowerLayout = QHBoxLayout()
-            
             self.layout = QVBoxLayout()
+            self.setupWidgets()
+            self.connectSlots()
+        
+        
+        def setupWidgets(self):
+
+            self.prevButton = QPushButton('Previous')
+            self.nextButton = QPushButton('Next')
+            self.jumpLabel = QLabel("jump To")
+            self.jumpBox = QLineEdit()
+            self.numberLabel = QLabel("out of {}")
+            self.goButton = QPushButton("Go")
+            self.jumpBox.setValidator(QIntValidator())
+            self.jumpBox.setFixedWidth(30)
+
+
 
             self.lowerLayout.addWidget(self.prevButton)
             self.lowerLayout.addWidget(self.nextButton)
-            self.upperLayout.addWidget(self.sliderLabel)
-            self.upperLayout.addWidget(self.slider)        
+            self.upperLayout.addWidget(self.jumpLabel)
+            self.upperLayout.addWidget(self.jumpBox)
+            self.upperLayout.addWidget(self.numberLabel)
+            self.upperLayout.addWidget(self.goButton)
+            self.upperLayout.setContentsMargins(2, 2, 5, 5)
+
             self.layout.addLayout(self.upperLayout)
             self.layout.addLayout(self.lowerLayout)
 
-            self.setLayout(self.layout)
-            self.connectSlots()
+            self.setLayout(self.layout)            
+
 
         def connectSlots(self):
-            self.nextButton.clicked.connect(lambda: self.signal.emit("next"))
-            self.prevButton.clicked.connect(lambda: self.signal.emit("previous"))
+            self.nextButton.clicked.connect(lambda: self.signal.emit({'increment': 'next'}))
+            self.prevButton.clicked.connect(lambda: self.signal.emit({'increment': 'previous'}))
+            self.goButton.clicked.connect(self.jump)
+        
+        def jump(self):
+            num = int(self.jumpBox.text())
+            if num < self.nspec:
+                self.signal.emit({'jump': num-1})
+
+        def update(self, data):
+            for key, val in data.items():
+                if key == 'nspec':
+                    self.nspec = val
+                    text = self.numberLabel.text()
+                    self.numberLabel.setText(text.format(self.nspec))
+                    self.numberLabel.repaint()
         
 class SmoothingTool(QWidget):
     """
@@ -70,8 +101,12 @@ class SmoothingTool(QWidget):
         self.connectSignal()
         self.setLayout(self.layout)
     
+
+        
     def reset(self):
         self.smoothBoxEdit.setText('0')
+    
+
     
     def connectSignal(self):
         self.smoothButton.clicked.connect(self.updateSmoothing)
@@ -200,83 +235,4 @@ class LineUpdateTool(QWidget):
         for widget in self.checkBoxWidgets.keys():
             widget.setChecked(False)
 
-class modelTool(QWidget):
-    """
-    Tool for drawing a model spectra on top of the data.
-    Currently this is very slow, so will not be included in main version
-    """
-    CONFIG_FILE = "/Users/patrick/code/spectra_code/dev/spectralyze/spectralyze/utils/config/spectra_model.toml"
-    signal = pyqtSignal(dict)
-    def __init__(self):
-        super().__init__()
-        self.config = toml.load(self.CONFIG_FILE)
-        self.spectra = self.config['spectra'].keys()
-        self.layout = QVBoxLayout()
-        self.setupWidgets()
-        self.connectSlots()
-    
-    def setupWidgets(self):
-        self.label = QLabel("Model Spectra")
-        self.slider = QSlider(Qt.Horizontal)
-        self.slider.setRange(0,1000)
-        self.slider.setTracking(True)
-        self.slider.setValue(250)
-        self.comboBox = QComboBox()
-        self.comboBox.addItem("none")
-        for item in self.spectra:
-            self.comboBox.addItem(item)
-        self.lowerLayout = QHBoxLayout()
-        self.label1 = QLabel("0.0")
-        self.label2 = QLabel("2.0")
-        self.label3 = QLabel("Redshift: {}".format(0.5))
-        self.lowerLayout.addWidget(self.label1)
-        self.lowerLayout.addWidget(self.slider)
-        self.lowerLayout.addWidget(self.label2)
-        self.lowestLayout = QHBoxLayout()
-
-        self.button1 = QPushButton("<<<")
-        self.button2 = QPushButton(">>>")
-        self.lowestLayout.addWidget(self.button1)
-        self.lowestLayout.addWidget(self.button2)
-
-        self.layout.addWidget(self.label)
-        self.layout.addWidget(self.comboBox)
-        self.layout.addWidget(self.label3)
-        self.layout.addLayout(self.lowerLayout)
-        self.layout.addLayout(self.lowestLayout)
-        self.setLayout(self.layout)
-    
-    def connectSlots(self):
-        self.button1.clicked.connect(self.decrease)
-        self.button2.clicked.connect(self.increase)
-        self.slider.valueChanged.connect(self.track)
-        self.slider.sliderReleased.connect(self.update)
-        self.comboBox.currentIndexChanged.connect(self.update)
-
-    def increase(self):
-        val = self.slider.value()
-        if val < 1000:
-            self.slider.setValue(val + 1)
-            self.slider.repaint()
-            self.update()
-    def decrease(self):
-        val = self.slider.value()
-        if val > 0:
-            self.slider.setValue(val-1)
-            self.slider.repaint()
-            self.update()
-
-    def update(self):
-        val = self.slider.value()
-        self.label3.setText("Redshift: {}".format(round(val*0.002, 3)))
-        self.label3.repaint()
-        if self.comboBox.currentIndex() != 0:
-            text = self.comboBox.currentText()
-            self.signal.emit({'spectra': text, "z": val*0.002})
-
-
-    def track(self):
-        val = self.slider.value()
-        self.label3.setText("Redshift: {}".format(round(val*0.002, 3)))
-        self.label3.repaint()
 

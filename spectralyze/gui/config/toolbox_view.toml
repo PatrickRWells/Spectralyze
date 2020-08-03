@@ -1,7 +1,6 @@
 [general]
     [general.widgets]
     import="spectralyze.gui.Views.Widgets.spectraNavigatorWidgets"
-    model="modelTool"
     navigator="SpectrumNavigatorTool"
     smoothing="SmoothingTool"
     zguess="ZGuessTool"
