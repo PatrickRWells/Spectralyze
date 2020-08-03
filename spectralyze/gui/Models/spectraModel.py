@@ -29,7 +29,6 @@ class abstractSpectraModel(fileModel):
                 pass
             else:
                 self.attributes.update({name: data})
-        print(self.attributes)
 
     def getWidget(self):
         """
