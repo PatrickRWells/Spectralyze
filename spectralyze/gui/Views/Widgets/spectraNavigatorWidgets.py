@@ -62,6 +62,7 @@ class SpectrumNavigatorTool(QWidget):
             self.nextButton.clicked.connect(lambda: self.signal.emit({'increment': 'next'}))
             self.prevButton.clicked.connect(lambda: self.signal.emit({'increment': 'previous'}))
             self.goButton.clicked.connect(self.jump)
+            self.jumpBox.returnPressed.connect(self.jump)
         
         def jump(self):
             num = int(self.jumpBox.text())
@@ -100,8 +101,6 @@ class SmoothingTool(QWidget):
         self.layout.addWidget(self.undoSmooth)
         self.connectSignal()
         self.setLayout(self.layout)
-    
-
         
     def reset(self):
         self.smoothBoxEdit.setText('0')
@@ -111,6 +110,7 @@ class SmoothingTool(QWidget):
     def connectSignal(self):
         self.smoothButton.clicked.connect(self.updateSmoothing)
         self.undoSmooth.clicked.connect(lambda: self.updateSmoothing(True))
+        self.smoothBoxEdit.returnPressed.connect(self.updateSmoothing)
 
     def updateSmoothing(self, undo=False):
         if not self.smoothBoxEdit.text():
@@ -206,15 +206,12 @@ class LineUpdateTool(QWidget):
 
         self.spectralLineLabel = QLabel(self.config[config_type]['name'])
         self.checkBoxWidgets = {}
-
-        for id, line in self.config[config_type]["lines"].items():
-            self.checkBoxWidgets.update({QCheckBox(line): id})
-
         self.checkLayout = QVBoxLayout()
 
-        for widget in self.checkBoxWidgets.keys():
+        for id, line in self.config[config_type]["lines"].items():
+            widget = QCheckBox(line)
+            self.checkBoxWidgets.update({id: widget})
             self.checkLayout.addWidget(widget)
-
         self.layout = QHBoxLayout()
 
         self.layout.addWidget(self.spectralLineLabel)
@@ -223,12 +220,18 @@ class LineUpdateTool(QWidget):
 
         self.connectSlots()
     
+    def update(self, data):
+        for key, value in data.items():
+            self.checkBoxWidgets[key].setChecked(value)
+        self.repaint()
+
+
     def connectSlots(self):
-        for key in self.checkBoxWidgets.keys():
-            key.stateChanged.connect(self.updateSpectra)
+        for key, box in self.checkBoxWidgets.items():
+            box.stateChanged.connect(self.updateSpectra)
                 
     def updateSpectra(self):
-        spectra = {id: box.isChecked() for box, id in self.checkBoxWidgets.items()}
+        spectra = {id: box.isChecked() for id,box in self.checkBoxWidgets.items()}
         self.signal.emit(spectra)
 
     def reset(self):

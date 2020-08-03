@@ -4,5 +4,3 @@ name="Spectral Lines"
     strongem = "Strong Emission"
     em = "All emission"
     abs = "Absorption"
-
-

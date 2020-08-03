@@ -132,6 +132,7 @@ class deimos1DSpectra(abstractSpectraModel):
         self.toolbox.update({'zguess': {'zguess': self.attributes['zguess'][self.curspec]}})
         self.toolbox.update({'zguess': {'confidence': self.attributes['confidence'][self.curspec]}})
         self.toolbox.update({'navigator':{'nspec': self.nspec}})
+        self.toolbox.update({'lineupdate': {'strongem' : False, 'em' : False, 'abs' : False}})
 
 
 def getSpectraModel(fname, config_type, global_config):
