@@ -7,6 +7,15 @@ from importlib import import_module
 from copy import copy
 
 class projectModel:
+    """
+    Model for storing and retrieving project data.
+    attributes
+    ----------
+    fileManager: File manager for saving data to disk
+    fileModels: Individual file models. Type will depend on kind of file
+    fileWidgets: References to the UI widgets associated with the files
+    fileConfigs: Dictionary containing file types    
+    """
     def __init__(self, name, global_config, file_manager):
         super().__init__()
         self.fileManager = file_manager
@@ -22,10 +31,16 @@ class projectModel:
         self.name = name
     
     def setFileManager(self, f):
+        """
+        Used when loading a previously saved project
+        """
         self.fileManager = f
 
     def __getstate__(self):
-
+        """
+        Prepare project data for disk storage.
+        References to UI, and other things that are stateless are removed
+        """
         data = copy(self.__dict__)
         del data['fileManager']
         del data['widget']
@@ -38,6 +53,10 @@ class projectModel:
         return data
     
     def __setstate__(self, state):
+        """
+        Reads in the data as outputted by __getstate___
+        Automatically called when the project is opened
+        """
         attributes = state.pop('attributes')
         self.__dict__ = state
         self.fileWidgets = {}
@@ -45,13 +64,14 @@ class projectModel:
         self.widget = None
         for fname, configtype in self.fileConfigs.items():
             self.addFile(fname, configtype)
-            self.fileModels[fname].attributes = attributes[fname]
-
-
-
-
+            self.fileModels[fname].updateAttributes(attributes[fname])
 
     def addFile(self, fname, config_type):
+        """
+        Adds a file to the project. 
+        fname: absolute path to the file
+        config_type: one of the config types from 
+        """
         if fname in self.fileModels.keys():
             pass
         else:
@@ -63,6 +83,9 @@ class projectModel:
                 pass
 
     def removeFile(self, fname):
+        """
+        Removes a file from the project
+        """
         for filename in self.fileModels.keys():
             if fname in filename:
                 model = self.fileModels.pop(filename)
@@ -78,12 +101,14 @@ class projectModel:
     def getFileModel(self, fname):
         if fname in self.fileModels.keys():
             return self.fileModels[fname]
-
-    def saveProjectModel(self, fname):
-        self.saveLocation = fname
-        pickle.dump(self, self.saveLocation)
     
     def getWidget(self):
+        """
+        Gets a UI widget for a project.
+        Presently, this is just a stack of the widgets associated
+        with the various files
+        """
+
         self.widget = QStackedWidget()
         for fname, model in self.fileModels.items():
             widget = self.getFileWidget(fname)
@@ -92,6 +117,11 @@ class projectModel:
         return self.widget
     
     def updateWidget(self, remove = None):
+        """
+        Updates the widget. If no name is passed, checks
+        for new file models and adds their widget if found.
+        If a name is passed, removes that widget from the stack
+        """
         if remove:
             widget = self.fileWidgets.pop(remove)
             self.widget.removeWidget(widget)
@@ -110,16 +140,25 @@ class projectModel:
 
     
     def setActive(self, fname):
+        """
+        Sets the active widget (i.e. top of the stack)
+        """
         for key, val in self.fileWidgets.items():
             if fname in key:
                 self.widget.setCurrentWidget(self.fileWidgets[key])
                 break
             
     def getFileWidget(self, fname):
+        """
+        Get UI widget for a particular file. 
+        """
         config_type = self.fileConfigs[fname]
         module = import_module(self.config['widgets'][config_type]['mod'])
         obj = getattr(module, self.config['widgets'][config_type]['obj'])
         return obj(self.fileModels[fname], self.fileConfigs[fname], self.global_config)
 
     def save(self):
+        """
+        Sends itself to the file manager to be saved
+        """
         self.fileManager.saveProject(self)

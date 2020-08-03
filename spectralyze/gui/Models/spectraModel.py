@@ -23,6 +23,12 @@ class abstractSpectraModel(fileModel):
         self.attributes = {}
         self.setup()        
         
+    def updateAttributes(self, attributes):
+        for name, data in attributes.items():
+            if type(data) is not list:
+                pass
+            else:
+                self.attributes.update({name: data})
 
     def getWidget(self):
         """

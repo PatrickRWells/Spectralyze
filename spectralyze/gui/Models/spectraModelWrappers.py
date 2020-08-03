@@ -7,6 +7,7 @@ import os
 import toml
 from importlib import import_module
 import matplotlib.pyplot as plt
+from spectralyze.utils.modeling import spectraModeler
 
 """
 Conains wrappers for various backends for data display and management
@@ -33,26 +34,35 @@ class deimos1DSpectra(abstractSpectraModel):
         self.curspec = 0
         self.cursmooth = 0
         self.attributes['zguess'] = self.nspec*[0.0]
+        self.attributes['confidence'] = self.nspec*['']
+        self.lines = {}
     
     def update(self, data):
         for key, value in data.items():
             if key == 'navigator':
-                if value == 'next':
-                    self.nextGraph()
-                if value == "previous":
-                    self.prevGraph()
+                self.navigate(value)
             elif key == "smoothing":
                 self.smoothGraph(value)
             elif key == "lineupdate":
                 self.updateLines(value)
             elif key == "zguess":
                 self.zGuessUpdate(value)
-
-
+    
+    def navigate(self, data):
+        for key, val in data.items():
+            if key == 'increment':
+                if val == 'next':
+                    self.nextGraph()
+                else:
+                    self.prevGraph()
+            elif key == 'jump':
+                self.plotGraph(val)
+            
     def getWidget(self):
         self.widget = QWidget()
         self.widget_layout = QVBoxLayout()
         self.label = QLabel("Spectra {} out of {}".format(self.curspec+1, self.nspec))
+        self.label.setMaximumHeight(20)
         self.label.setAlignment(QtCore.Qt.AlignCenter)
         self.spectraView = spectraView(self.plot)
         self.widget_layout.addWidget(self.label)
@@ -70,25 +80,27 @@ class deimos1DSpectra(abstractSpectraModel):
 
 
     def plotGraph(self, index):
+        self.curspec = index
         self.plot.clf()
         self.mask.plot(self.keys[index], fig=self.plot)
         self.spectraView.canvas.draw()
         self.updateLabel()
         self.widget.repaint()
+        self.cursmooth = 0
 
     def nextGraph(self, **kwargs):
         if self.curspec < self.nspec - 1:
             self.curspec += 1
             self.plotGraph(self.curspec)
             self.cursmooth = 0
-            self.toolbox.update({'zguess': self.attributes['zguess'][self.curspec]})
+            self.forceToolboxUpdate()
 
     def prevGraph(self, **kwargs):
         if self.curspec > 0:
             self.curspec -= 1
             self.plotGraph(self.curspec)
             self.cursmooth = 0
-            self.toolbox.update({'zguess': self.attributes['zguess'][self.curspec]})
+            self.forceToolboxUpdate()
 
     def smoothGraph(self, smoothing):
         self.cursmooth = smoothing
@@ -110,10 +122,17 @@ class deimos1DSpectra(abstractSpectraModel):
         self.spectraView.canvas.draw()
 
     def zGuessUpdate(self, zguess, **kwargs):
-        self.attributes['zguess'][self.curspec] = zguess
+        for key,value in zguess.items():
+            if key == "guess":
+                self.attributes['zguess'][self.curspec] = value
+            elif key == "confidence":
+                self.attributes['confidence'][self.curspec] = value
 
     def forceToolboxUpdate(self):
-        self.toolbox.update({'zguess': self.attributes['zguess'][self.curspec]})
+        self.toolbox.update({'zguess': {'zguess': self.attributes['zguess'][self.curspec]}})
+        self.toolbox.update({'zguess': {'confidence': self.attributes['confidence'][self.curspec]}})
+        self.toolbox.update({'navigator':{'nspec': self.nspec}})
+        self.toolbox.update({'lineupdate': {'strongem' : False, 'em' : False, 'abs' : False}})
 
 
 def getSpectraModel(fname, config_type, global_config):

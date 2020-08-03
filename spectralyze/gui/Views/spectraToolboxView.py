@@ -12,9 +12,9 @@ class spectraToolboxView(QWidget):
     """
     UI Element for use with data views.
     ------Tools--------
-    Which widgets to display are determined by the appropriate config type
-    Which should be one of hte configs laid out in the toolbox_view config file
-    The signal will emit a dictionary the tool name as key, and a dictionary
+    which widgets to display are determined by the appropriate config type in 
+    the toolbox_view config file.
+    The signal will emit a dictionary with the tool name as key, and a dictionary
     with the data as a value
     """
 
@@ -38,6 +38,12 @@ class spectraToolboxView(QWidget):
 
 
     def setupWidgets(self):
+        """
+        Adds widgets to the toolbox based on the configuration
+        Currently is a static vertical layout, but should be updated
+        in the future for other types of layouts, and possibly other
+        locations in the UI.
+        """
         self.widgets = {}
         mod = None
         for key, val in self.config['general']['widgets'].items():
@@ -55,12 +61,21 @@ class spectraToolboxView(QWidget):
                 self.layout.addWidget(widget)
 
     def connectSignals(self):
-
+        """
+        Connects signal widgets to the toolbox signal
+        Passed when any of the interactive UI elements for the widget
+        are triggered.
+        """
         for name, widget in self.widgets.items():
             if hasattr(widget, "signal"):
                 widget.signal.connect(lambda x, y=name: self.signal.emit({y: x}))
 
     def update(self, data):
+        """
+        Method for updating a particular widget.
+        Input should be dictionary, with widget name as the key
+        and a dictionary with the data for the value
+        """
         for key, value in data.items():
             if key in self.widgets.keys():
                 self.widgets[key].update(value)
