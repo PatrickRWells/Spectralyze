@@ -75,7 +75,7 @@ class SpectrumNavigatorTool(QWidget):
                     self.nspec = val
                     text = self.numberLabel.text()
                     self.numberLabel.setText(text.format(self.nspec))
-                    self.numberLabel.repaint()
+            self.repaint()
         
 class SmoothingTool(QWidget):
     """
@@ -164,13 +164,13 @@ class ZGuessTool(QWidget):
         for name, value in data.items():
             if name == "zguess":
                 self.zGuessBoxEdit.setText(str(value))
-                self.zGuessBoxEdit.repaint()
+                self.zGuessBoxEdit.update()
             elif name == "confidence":
                 if value:
                     self.confidenceWidget.setCurrentText(value)
                 else:
                     self.confidenceWidget.setCurrentIndex(0)
-                self.confidenceWidget.repaint()
+        self.repaint()
 
     def updateGuess(self):
         text = self.zGuessBoxEdit.text()

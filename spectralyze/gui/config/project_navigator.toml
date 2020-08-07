@@ -1,0 +1,7 @@
+[widgets]
+    [widgets.fileList]
+    name='Files'
+    widget="fileList"
+        [widgets.fileList.icons]
+        active="folderOpen.png"
+        inactive="folderClosed.png"

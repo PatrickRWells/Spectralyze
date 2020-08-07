@@ -1,10 +1,15 @@
-from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog, QListWidget, QToolButton, QLabel, QApplication, QStackedWidget, QSizePolicy
+from PyQt5.QtWidgets import (QWidget, QPushButton, QVBoxLayout, QHBoxLayout, 
+                            QFileDialog, QListWidget, QToolButton, QLabel, 
+                            QApplication, QStackedWidget, QSizePolicy, QListWidgetItem, QTabWidget)
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtGui import QIcon
+
 from spectralyze.gui.Models.projectModel import projectModel
 from spectralyze.gui.Views.fileBrowse import fileBrowser
 import datetime
 import os
+import sys
+import toml
 
 
 class projectView(QWidget):
@@ -28,7 +33,6 @@ class projectView(QWidget):
         self.model = project
         self.fileBrowser = None
         self.fileViews = {}
-
         self.setupWidgets()
         self.connectSignals()
         self.connectSlots()
@@ -41,14 +45,15 @@ class projectView(QWidget):
         """
 
         self.layout = QHBoxLayout()
+        self.projectNavigator = ProjectNavigator(self.global_config)
+        self.projectNavigator.update({'fileList': self.model.getFileNames()})
         self.leftLayout = QVBoxLayout()
         self.fileViewsWidget = self.model.getWidget()
         self.projectNameLabel = QLabel("Project: {}".format(self.model.name))
         self.saveButton = QPushButton("Save Project")
         self.saveLabel = QLabel("")
-        self.fileList = fileList(self.model.getFileNames())
         self.leftLayout.addWidget(self.projectNameLabel)
-        self.leftLayout.addWidget(self.fileList)
+        self.leftLayout.addWidget(self.projectNavigator)
         self.leftLayout.addWidget(self.saveButton)
         self.leftLayout.addWidget(self.saveLabel)
         self.layout.addLayout(self.leftLayout)
@@ -57,26 +62,18 @@ class projectView(QWidget):
 
 
     def connectSignals(self):
-        pass
+        self.projectNavigator.signal.connect(self.printSignal)
 
     def connectSlots(self):
-        self.fileList.addFile.connect(self.getFile)
-        self.fileList.removeFile.connect(lambda x: self.removeFile(x))
-        self.fileList.currentFileChanged.connect(lambda x: self.setActiveFile(x))
+        #self.fileList.addFile.connect(self.getFile)
+        #self.fileList.removeFile.connect(lambda x: self.removeFile(x))
+        #self.fileList.currentFileChanged.connect(lambda x: self.setActiveFile(x))
         self.saveButton.clicked.connect(self.saveProjectClicked)
-
-    def getFile(self):
-        if self.fileBrowser is None:
-            self.fileBrowser = fileBrowser("spectra") #Currently this is the only type of file
-                                                      #we know how to handle
-            self.fileBrowser.fileOpened.connect(lambda x: self.addFile(x))
-
-        self.fileBrowser.openFile()
 
     def addFile(self, files):
         for fname, ftype in files.items():
-            self.model.addFile(fname, ftype)
-            self.fileList.updateFileList(os.path.basename(fname))
+            #   self.model.addFile(fname, ftype)
+            self.fileList.update(os.path.basename(fname))
 
     def removeFile(self, fname):
         self.model.removeFile(fname)
@@ -92,20 +89,23 @@ class projectView(QWidget):
             self.saveLabel.show()
 
         self.saveProject.emit()
-
+    
+    def printSignal(self, data):
+        print(data)
 
 
 class fileList(QWidget):
-
-    addFile = pyqtSignal()
+    signal = pyqtSignal(dict)
+    addFile = pyqtSignal(str)
     removeFile = pyqtSignal(str)
     currentFileChanged = pyqtSignal(str)
 
-    def __init__(self, files=None):
+    def __init__(self, files={}, global_config={}):
         super().__init__()
+        self.global_config = global_config
         self.list= QListWidget()
         if files is not None:
-            for file in files:
+            for file in files.keys():
                 self.list.addItem(os.path.basename(file))
         self.layout = QVBoxLayout()
         self.setMinimumHeight(400)
@@ -119,31 +119,84 @@ class fileList(QWidget):
         self.removeButton.setText('-')
         self.buttonLayout.addWidget(self.removeButton)
         self.buttonLayout.addWidget(self.addButton)
-        self.fileLabel = QLabel("Files")
-
-        self.layout.addWidget(self.fileLabel)
+        self.fileBrowser = None
         self.layout.addWidget(self.list)
         self.layout.addLayout(self.buttonLayout)
 
         self.setLayout(self.layout)
         self.connectSignals()
+        
 
     def connectSignals(self):
-        self.addButton.clicked.connect(lambda: self.addFile.emit())
+        self.addButton.clicked.connect(self.getFile)
         self.removeButton.clicked.connect(self.fileRemoveClicked)
         self.list.itemSelectionChanged.connect(self.updateSelection)
 
-    def updateFileList(self, file):
-        self.list.addItem(file)
-        self.update()
+    def update(self, files):
+        for file in files:
+            self.list.addItem(os.path.basename(file))
+        self.repaint()
 
     def fileRemoveClicked(self):
         item = self.list.currentItem()
         row = self.list.currentRow()
         self.list.takeItem(row)
-        self.update()
+        #self.update()
         self.removeFile.emit(item.text())
 
     def updateSelection(self):
         selection = self.list.currentItem()
         self.currentFileChanged.emit(selection.text())
+
+    def getFile(self):
+        if self.fileBrowser is None:
+            self.fileBrowser = fileBrowser("spectra") #Currently this is the only type of file
+                                                      #we know how to handle
+            self.fileBrowser.fileOpened.connect(lambda x: self.signal.emit({'addFile': x}))
+
+        self.fileBrowser.openFile()
+
+
+class ProjectNavigator(QTabWidget):
+    signal = pyqtSignal(dict)
+    def __init__(self, global_config):
+        super().__init__()
+        self.global_config = global_config
+        self.CONFIG_FILE = os.path.join(self.global_config['config_location'], 
+                                    self.global_config['projectNavigator'])
+
+        self.config = toml.load(self.CONFIG_FILE)
+        self.icon_root = self.global_config['resource_location']
+        self.layout = QVBoxLayout()
+        self.setup()
+        self.connectSignals()
+        self.setLayout(self.layout)
+
+    def setup(self):
+        self.widgets = {}
+        self.icons = {}
+        for name, data in self.config['widgets'].items():
+            widget_type = getattr(sys.modules[__name__], data['widget'])
+            widget = widget_type()
+            self.widgets.update({name: widget})
+            self.icons.update({name: data['icons']})
+            img_loc = os.path.join(self.icon_root, self.icons[name]['inactive'])
+            self.addTab(self.widgets[name], QIcon(img_loc), data['name'])
+
+        self.setTabPosition(QTabWidget.West)
+        self.connectSignals()
+    
+    def connectSignals(self):
+        for name, widget in self.widgets.items():
+            if hasattr(widget, 'signal'):
+                widget.signal.connect(self.printData)
+    
+    def update(self, data):
+        for key, val in data.items():
+            if key in self.widgets:
+                self.widgets[key].update(val)
+    
+    def printData(self, data):
+        print(data)
+ 
+

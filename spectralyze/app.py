@@ -13,12 +13,15 @@ import atexit
 class spectralyzeApp(QApplication):
     global_config = os.path.join(os.path.dirname(os.path.abspath(spectralyze.__file__)), 
                                 'gui/config/')
+    resources = os.path.join(os.path.dirname(os.path.abspath(spectralyze.__file__)), 
+                                'gui/resources/')
 
     def __init__(self):
         super().__init__([])
         self.config_location = os.path.join(self.global_config, 'master_config.toml')
         self.config = toml.load(self.config_location)
         self.config['config_location'] = self.global_config
+        self.config['resource_location'] = self.resources
         self.fileManager =  fileManager()
         self.activeWindow = startupView(global_config=self.config_location,
                                         file_manager=self.fileManager)

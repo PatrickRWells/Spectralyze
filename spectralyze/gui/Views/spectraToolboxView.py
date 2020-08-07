@@ -79,3 +79,4 @@ class spectraToolboxView(QWidget):
         for key, value in data.items():
             if key in self.widgets.keys():
                 self.widgets[key].update(value)
+        super().update()

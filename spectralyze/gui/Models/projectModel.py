@@ -1,5 +1,6 @@
 from spectralyze.gui.Models.fileModel import getFileModel
 from PyQt5.QtWidgets import QStackedWidget
+from PyQt5.QtCore import QRunnable, QThreadPool, pyqtSignal, QObject
 import pickle
 import os
 import toml
@@ -29,6 +30,7 @@ class projectModel:
         self.widget = None
         self.saveLocation = ""
         self.name = name
+        self.threadPool = QThreadPool()
     
     def setFileManager(self, f):
         """
@@ -45,6 +47,7 @@ class projectModel:
         del data['fileManager']
         del data['widget']
         del data['fileWidgets']
+        del data['threadPool']
         attributes = {}
         for k, v in data['fileModels'].items():
             attributes.update({k: v.attributes})
@@ -62,11 +65,11 @@ class projectModel:
         self.fileWidgets = {}
         self.fileModels = {}
         self.widget = None
+        self.threadPool = QThreadPool()
         for fname, configtype in self.fileConfigs.items():
-            self.addFile(fname, configtype)
-            self.fileModels[fname].updateAttributes(attributes[fname])
+            self.addFile(fname, configtype, attributes[fname])
 
-    def addFile(self, fname, config_type):
+    def addFile(self, fname, config_type, attributes={}):
         """
         Adds a file to the project. 
         fname: absolute path to the file
@@ -75,12 +78,17 @@ class projectModel:
         if fname in self.fileModels.keys():
             pass
         else:
-            self.fileModels.update({fname: getFileModel(fname, 'spectra', config_type, self.global_config)})
             self.fileConfigs.update({fname: config_type})
-            if self.widget is not None:
-                self.updateWidget()
-            else:
-                pass
+            loader = fileLoader(fname, config_type, self.global_config, attributes)
+            loader.signals.result.connect(self.updateFiles)
+            self.threadPool.start(loader)
+
+    def updateFiles(self, fileobj):
+        self.fileModels.update({fileobj.fname: fileobj})
+        if self.widget is not None:
+            self.updateWidget()
+
+
 
     def removeFile(self, fname):
         """
@@ -96,8 +104,11 @@ class projectModel:
             
 
     def getFileNames(self):
-        return self.fileModels.keys()
+        return self.fileConfigs.keys()
     
+    def getFileConfigs(self):
+        return self.fileConfigs
+        
     def getFileModel(self, fname):
         if fname in self.fileModels.keys():
             return self.fileModels[fname]
@@ -162,3 +173,23 @@ class projectModel:
         Sends itself to the file manager to be saved
         """
         self.fileManager.saveProject(self)
+
+class fileLoader(QRunnable):
+    def __init__(self, file, config_type, global_config, attributes = {}):
+        super().__init__()
+        self.file = file
+        self.config_type = config_type
+        self.global_config = global_config
+        self.signals = signals()
+        self.attributes = attributes
+
+    def run(self):
+        data = getFileModel(self.file, 'spectra', self.config_type, self.global_config)
+        if self.attributes:
+            data.updateAttributes(self.attributes)
+        self.signals.result.emit(data)
+
+class signals(QObject):
+    result=pyqtSignal(object)
+    def __init__(self):
+        super().__init__()
