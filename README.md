@@ -5,7 +5,7 @@ other types of spectra.
 
 ## Installing
 
-Since this projcet is very early in its development, it is recommended you
+Since this project is very early in its development, it is recommended you
 install with pip in development mode:
 
 ```
@@ -19,7 +19,7 @@ GitHub
 
 ### Requirements
 
-This requirements need to be installed before installing Spectralyze
+These requirements need to be installed before installing Spectralyze
 
 keckode: https://github.com/cdfassnacht/keckcode<br>
 specim: https://github.com/cdfassnacht/specim<br>

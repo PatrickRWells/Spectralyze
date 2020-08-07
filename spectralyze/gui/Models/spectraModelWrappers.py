@@ -28,7 +28,7 @@ class deimos1DSpectra(abstractSpectraModel):
         super().__init__(fname, "keckcode_deimos1d", global_config)
         self.mask = deimosmask1d.DeimosMask1d(self.fname)
         self.keys = list(self.mask.keys())
-        self.plot = plt.figure(dpi=50)
+        self.plot = plt.figure(dpi=75)
         self.plot = self.mask.plot(self.keys[0], fig=self.plot)
         self.nspec = self.mask.nspec
         self.curspec = 0
@@ -118,7 +118,7 @@ class deimos1DSpectra(abstractSpectraModel):
         else:
             self.plotGraph(self.curspec)
 
-        self.mask.mark_lines(self.keys[self.curspec], self.attributes['zguess'][self.curspec], lines, fig=self.plot, usesmooth=self.cursmooth)
+        self.mask.mark_lines(lines, self.attributes['zguess'][self.curspec], self.keys[self.curspec], fig=self.plot, usesmooth=self.cursmooth)
         self.spectraView.canvas.draw()
 
     def zGuessUpdate(self, zguess, **kwargs):
