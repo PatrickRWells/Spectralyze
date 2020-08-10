@@ -5,3 +5,8 @@
         [widgets.fileList.icons]
         active="folderOpen.png"
         inactive="folderClosed.png"
+        [widgets.fileList.callbacks]
+        addFile="addFile"
+        updateSelection="updateSelection"
+        removeFile="removeFile"
+

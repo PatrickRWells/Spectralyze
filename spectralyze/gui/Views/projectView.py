@@ -62,7 +62,7 @@ class projectView(QWidget):
 
 
     def connectSignals(self):
-        self.projectNavigator.signal.connect(self.printSignal)
+        self.projectNavigator.signal.connect(self.handleSignal)
 
     def connectSlots(self):
         #self.fileList.addFile.connect(self.getFile)
@@ -72,13 +72,12 @@ class projectView(QWidget):
 
     def addFile(self, files):
         for fname, ftype in files.items():
-            #   self.model.addFile(fname, ftype)
-            self.fileList.update(os.path.basename(fname))
+            self.model.addFile(fname, ftype)
 
     def removeFile(self, fname):
         self.model.removeFile(fname)
 
-    def setActiveFile(self, name):
+    def updateSelection(self, name):
         self.model.setActive(name)
 
 
@@ -90,15 +89,61 @@ class projectView(QWidget):
 
         self.saveProject.emit()
     
-    def printSignal(self, data):
-        print(data)
+    def handleSignal(self, data):
+        for k,v in data.items():
+            if hasattr(self, k):
+                f = getattr(self, k)
+                f(v)
 
+
+class ProjectNavigator(QTabWidget):
+    signal = pyqtSignal(dict)
+    def __init__(self, global_config):
+        super().__init__()
+        self.global_config = global_config
+        self.CONFIG_FILE = os.path.join(self.global_config['config_location'], 
+                                    self.global_config['projectNavigator'])
+
+        self.config = toml.load(self.CONFIG_FILE)
+        self.icon_root = self.global_config['resource_location']
+        self.layout = QVBoxLayout()
+        self.setup()
+        self.setLayout(self.layout)
+
+    def setup(self):
+        self.widgets = {}
+        self.icons = {}
+        for name, data in self.config['widgets'].items():
+            widget_type = getattr(sys.modules[__name__], data['widget'])
+            widget = widget_type()
+            self.widgets.update({name: widget})
+            self.icons.update({name: data['icons']})
+            img_loc = os.path.join(self.icon_root, self.icons[name]['inactive'])
+            self.addTab(self.widgets[name], QIcon(img_loc), data['name'])
+
+        self.setTabPosition(QTabWidget.West)
+        self.connectSignals()
+    
+    def connectSignals(self):
+        for name, widget in self.widgets.items():
+            if hasattr(widget, 'signal'):
+                widget.signal.connect(lambda x, y=name: self.handleSignal(x, y))
+    
+    def update(self, data):
+        for key, val in data.items():
+            if key in self.widgets:
+                self.widgets[key].update(val)
+    
+    def handleSignal(self, data, widget):
+        for key, val in data.items():
+            callback = self.config['widgets'][widget]['callbacks'][key]
+            if hasattr(self, callback):
+                f =  getattr(self, callback)
+                f(data)
+            self.signal.emit({key: val})
 
 class fileList(QWidget):
     signal = pyqtSignal(dict)
-    addFile = pyqtSignal(str)
-    removeFile = pyqtSignal(str)
-    currentFileChanged = pyqtSignal(str)
 
     def __init__(self, files={}, global_config={}):
         super().__init__()
@@ -135,68 +180,34 @@ class fileList(QWidget):
     def update(self, files):
         for file in files:
             self.list.addItem(os.path.basename(file))
-        self.repaint()
+        super().update()
 
     def fileRemoveClicked(self):
         item = self.list.currentItem()
         row = self.list.currentRow()
         self.list.takeItem(row)
-        #self.update()
-        self.removeFile.emit(item.text())
+        super().update()
+        self.signal.emit({'removeFile': item.text()})
 
     def updateSelection(self):
         selection = self.list.currentItem()
-        self.currentFileChanged.emit(selection.text())
+        self.signal.emit({'updateSelection': selection.text()})
+
+    def addFile(self, data):
+        for key, val in data.items():
+            self.list.addItem(os.path.basename(key))
+        super().update()
+        self.signal.emit({'addFile': data})
 
     def getFile(self):
         if self.fileBrowser is None:
             self.fileBrowser = fileBrowser("spectra") #Currently this is the only type of file
                                                       #we know how to handle
-            self.fileBrowser.fileOpened.connect(lambda x: self.signal.emit({'addFile': x}))
+            self.fileBrowser.fileOpened.connect(self.addFile)
 
         self.fileBrowser.openFile()
 
 
-class ProjectNavigator(QTabWidget):
-    signal = pyqtSignal(dict)
-    def __init__(self, global_config):
-        super().__init__()
-        self.global_config = global_config
-        self.CONFIG_FILE = os.path.join(self.global_config['config_location'], 
-                                    self.global_config['projectNavigator'])
 
-        self.config = toml.load(self.CONFIG_FILE)
-        self.icon_root = self.global_config['resource_location']
-        self.layout = QVBoxLayout()
-        self.setup()
-        self.connectSignals()
-        self.setLayout(self.layout)
-
-    def setup(self):
-        self.widgets = {}
-        self.icons = {}
-        for name, data in self.config['widgets'].items():
-            widget_type = getattr(sys.modules[__name__], data['widget'])
-            widget = widget_type()
-            self.widgets.update({name: widget})
-            self.icons.update({name: data['icons']})
-            img_loc = os.path.join(self.icon_root, self.icons[name]['inactive'])
-            self.addTab(self.widgets[name], QIcon(img_loc), data['name'])
-
-        self.setTabPosition(QTabWidget.West)
-        self.connectSignals()
-    
-    def connectSignals(self):
-        for name, widget in self.widgets.items():
-            if hasattr(widget, 'signal'):
-                widget.signal.connect(self.printData)
-    
-    def update(self, data):
-        for key, val in data.items():
-            if key in self.widgets:
-                self.widgets[key].update(val)
-    
-    def printData(self, data):
-        print(data)
  
 
