@@ -124,6 +124,21 @@ class SmoothingTool(QWidget):
 
 
 
+class spectraInfo(QWidget):
+    signal = pyqtSignal(dict)
+    def __init__(self):
+        super().__init__()
+        self.layout = QHBoxLayout()
+        self.text = "Slit id: {}"
+        self.label = QLabel('Hi')
+        self.layout.addWidget(self.label)
+        self.setLayout(self.layout)
+    
+    def update(self, data):
+        for name, value in data.items():
+            if name == 'slitid':
+                self.label.setText(self.text.format(value))
+        self.repaint()
 
 class ZGuessTool(QWidget):
     """

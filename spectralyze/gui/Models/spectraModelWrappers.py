@@ -133,6 +133,13 @@ class deimos1DSpectra(abstractSpectraModel):
         self.toolbox.update({'zguess': {'confidence': self.attributes['confidence'][self.curspec]}})
         self.toolbox.update({'navigator':{'nspec': self.nspec}})
         self.toolbox.update({'lineupdate': {'strongem' : False, 'em' : False, 'abs' : False}})
+        self.toolbox.update({'spectraInfo':{'slitid': self.getCurrentSlitId()}})
+    
+    def getCurrentSlitId(self):
+        name = self.keys[self.curspec]
+        slit = name.split('_')[1]
+        return slit
+
 
 
 def getSpectraModel(fname, config_type, global_config):

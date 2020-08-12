@@ -2,6 +2,7 @@
     [general.widgets]
     import="spectralyze.gui.Views.Widgets.spectraNavigatorWidgets"
     navigator="SpectrumNavigatorTool"
+    spectraInfo="spectraInfo"
     smoothing="SmoothingTool"
     zguess="ZGuessTool"
     lineupdate="LineUpdateTool"
