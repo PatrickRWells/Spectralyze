@@ -32,3 +32,8 @@ cdfutils: https://github.com/cdfassnacht/cdfutils<br>
 Run the following command in your terminal:
 
 ```spectralyze_gui```
+
+
+### KNOWN BUGS
+
+Sometimes, certian UI elements will not respond when a window is first loaded. To bypass, click to a different open program, then bring spectralyze back to front.
