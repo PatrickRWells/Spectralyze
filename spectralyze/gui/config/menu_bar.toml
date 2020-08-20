@@ -1,0 +1,10 @@
+[menus]
+    [menus.file]
+    name="File"
+        [menus.file.actions]
+            [menus.file.actions.exportMetaData]
+            name="Export File Data"
+            icon="None"
+            [menus.file.actions.importMetaData]
+            name="Import File Data"
+            icon="None"
