@@ -196,8 +196,10 @@ class fileList(QWidget):
         for file in files:
             self.list.addItem(os.path.basename(file))
         
-        self.list.setCurrentRow(self.list.count() - 1)
-        self.list.currentItem().setSelected(True)
+        count = self.list.count()
+        if count > 0:
+            self.list.setCurrentRow(self.list.count() - 1)
+            self.list.currentItem().setSelected(True)
 
         super().update()
 
