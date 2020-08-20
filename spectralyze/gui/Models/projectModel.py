@@ -26,23 +26,30 @@ class projectModel(QObject):
         super().__init__()
         self.fileManager = file_manager
         self.global_config = global_config
-        self.CONFIG_FILE = os.path.join(self.global_config['config_location'], 
-                                        self.global_config['projectModel'])
         self.fileModels = {}
         self.fileWidgets = {}
         self.fileConfigs = {}
         self.loaded = {}
-
-        self.config = toml.load(self.CONFIG_FILE)
+        self.active = None
+        self.getConfig()
         self.widget = None
         self.saveLocation = ""
         self.name = name
 
+    def getConfig(self):
+        self.CONFIG_FILE = os.path.join(self.global_config['config_location'], 
+                                        self.global_config['projectModel'])
+        self.config = toml.load(self.CONFIG_FILE)
+
+
+        
     def setFileManager(self, f):
         """
         Used when loading a previously saved project
         """
         self.fileManager = f
+        for model in self.fileModels.values():
+            model.setFileManager(f)
 
     def __getstate__(self):
         """
@@ -53,6 +60,7 @@ class projectModel(QObject):
         del data['fileManager']
         del data['widget']
         del data['fileWidgets']
+        del data['config']
         attributes = {}
         for k, v in data['fileModels'].items():
             att = v.attributes
@@ -73,6 +81,7 @@ class projectModel(QObject):
         self.fileModels = {}
         self.loaded = {}
         self.widget = None
+        self.getConfig()
 
         for fname, configtype in self.fileConfigs.items():
             self.addFile(fname, configtype, attributes[fname])
@@ -100,6 +109,9 @@ class projectModel(QObject):
         if self.widget is not None:
             self.updateWidget()
         
+        if len(self.fileModels.keys()) > 0:
+            self.active = list(self.fileModels.keys())[-1]
+
         if len(self.loaded) == len(self.fileConfigs.keys()):
             self.loadingComplete.emit()
 
@@ -171,6 +183,7 @@ class projectModel(QObject):
         for key, val in self.fileWidgets.items():
             if fname in key:
                 self.widget.setCurrentWidget(self.fileWidgets[key])
+                self.active = fname
                 break
             
     def getFileWidget(self, fname):
@@ -188,6 +201,19 @@ class projectModel(QObject):
         """
         self.fileManager.saveProject(self)
     
+    def canHandle(self, target):
+        """
+        Checks if this object can handle a signal aimed at a particular target
+        """
+        if target in self.config['signals']['canHandle']:
+            return True
+        else:
+            return False
+    
+    def handleSignal(self, signal):
+        if signal['target'] == 'fileModel':
+            self.fileModels[self.active].handleSignal(signal)
+
     def exportData(self, fname, dtype):
         for key, val in self.fileModels.items():
             if fname in key:
@@ -236,5 +262,10 @@ class projectLoader(QObject):
         with open(self.fname, 'rb') as f:
             project = pickle.load(f)
             project.setFileManager(self.fileManager)
-            project.loadingComplete.connect(lambda x=project: self.loadingComplete.emit(x))
+            project.loadingComplete.connect(lambda x=project: self.complete(x))
+
+    def complete(self, project):
+        project.setFileManager(self.fileManager)
+        self.loadingComplete.emit(project)
+
 

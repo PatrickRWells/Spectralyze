@@ -2,3 +2,6 @@
     [widgets.keckcode_deimos1d]
     mod="spectralyze.gui.Views.spectraNavigatorView"
     obj="spectraNavigatorView"
+
+[signals]
+canHandle=["fileModel"]

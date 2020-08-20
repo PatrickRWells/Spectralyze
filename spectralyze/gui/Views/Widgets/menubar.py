@@ -14,7 +14,6 @@ class MenuBar(QMenuBar):
 
         super().__init__()
         self.setup()
-        print(self.menus)
     
     def setup(self):
         self.menus = {}
@@ -28,14 +27,16 @@ class MenuBar(QMenuBar):
             for action in menuData['actions']:
                 actionData = menuData['actions'][action]
                 actName = actionData['name']
+                actTarget = actionData['target']
                 icon = actionData['icon']
-                if icon is None:
+                if icon == 'None':
                     actObj = QAction(QIcon(''), actName)
-                    actObj.triggered.connect(lambda x=actName: self.signal.emit({'menuBar' : x}))
+                    actObj.triggered.connect(lambda x, y=action, z=actTarget: self.signal.emit({'target': z, 'action': y}))
                     actObj.isIconVisibleInMenu = False
                     menuObj.addAction(actObj)
-                    self.menuItems[menuName].update({actName:  actObj})
+                    self.menuItems[menuName].update({action:  actObj})
 
+    
 
     def connectSignals(self):
         pass

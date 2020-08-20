@@ -13,6 +13,7 @@ class abstractSpectraModel(fileModel):
     An abstract class for handling spectra objects
     """
     def __init__(self, fname, config_type, global_config):
+        super().__init__()
 
         self.global_config = global_config
         self.CONFIG_FILE = os.path.join(self.global_config['config_location'],
@@ -57,17 +58,22 @@ class abstractSpectraModel(fileModel):
     def forceToolboxUpdate(self):
         pass
 
-    def exportFileData(self, fpath):
+    def exportMetaData(self, fpath):
         data = self.attributes
         fname = '.'.join([fpath, 'specm'])
         with open(fname, 'wb') as outfile:
             pickle.dump(data, outfile)
 
-    def importFileData(self, data):
+    def importMetaData(self, data):
         for key in data.keys():
             with open(key, 'rb') as infile:
                 data = pickle.load(infile)
                 self.attributes = data
             self.forceToolboxUpdate()
+
+    def handleSignal(self, signal):
+        if hasattr(self,  signal['action']):
+            print("Yay!")
+            print(self.fileManager)
 
 

@@ -1,6 +1,6 @@
 class fileModel:
     def __init__(self):
-        pass
+        self.fileManager = None
     def __getstate__(self):
         pass
 
@@ -9,7 +9,10 @@ class fileModel:
 
     def updateAttributes(self, attributes):
         pass
-
+    
+    def setFileManager(self, f):
+        print(f)
+        self.fileManager = f
 
 def getFileModel(fname, type, config_type, global_config):
     if type == 'spectra':

@@ -39,6 +39,7 @@ class projectView(QWidget):
         self.setupWidgets()
         self.connectSignals()
         self.connectSlots()
+        super().update()
 
     def setupWidgets(self):
         """
@@ -47,7 +48,6 @@ class projectView(QWidget):
         """
         self.layout = QHBoxLayout()
         self.layout.addWidget(self.menuBar)
-        self.menuBar.show()
         self.projectNavigator = ProjectNavigator(self.global_config)
         self.projectNavigator.update({'fileList': self.model.getFileNames()})
         self.leftLayout = QVBoxLayout()
@@ -66,6 +66,7 @@ class projectView(QWidget):
 
     def connectSignals(self):
         self.projectNavigator.signal.connect(self.handleSignal)
+        self.menuBar.signal.connect(self.handleMenuBarAction)
         #self.menuBar.exportMeta.connect(self.exportFileMeta)
         #self.menuBar.importMeta.connect(self.importFileMeta)
 
@@ -99,10 +100,10 @@ class projectView(QWidget):
             if hasattr(self, k):
                 f = getattr(self, k)
                 f(v)
-
-    def exportFileMeta(self):
-        fname = self.projectNavigator.widgets['fileList'].getCurrentSelection()
-        self.model.exportData(fname, 'attributes')
+    
+    def handleMenuBarAction(self, data):
+        if self.model.canHandle(data['target']):
+            self.model.handleSignal(data)
 
     def importFileMeta(self):
         fname = self.projectNavigator.widgets['fileList'].getCurrentSelection()
@@ -197,8 +198,10 @@ class fileList(QWidget):
         for file in files:
             self.list.addItem(os.path.basename(file))
         
-        self.list.setCurrentRow(self.list.count() - 1)
-        self.list.currentItem().setSelected(True)
+        count = self.list.count()
+        if count > 0:
+            self.list.setCurrentRow(self.list.count() - 1)
+            self.list.currentItem().setSelected(True)
 
         super().update()
 
