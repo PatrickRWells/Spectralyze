@@ -34,7 +34,7 @@ class projectView(QWidget):
         self.model = project
         self.fileBrowser = None
         self.fileViews = {}
-        self.menuBar = MenuBar()
+        self.menuBar = MenuBar(self.global_config)
 
         self.setupWidgets()
         self.connectSignals()
@@ -47,6 +47,7 @@ class projectView(QWidget):
         """
         self.layout = QHBoxLayout()
         self.layout.addWidget(self.menuBar)
+        self.menuBar.show()
         self.projectNavigator = ProjectNavigator(self.global_config)
         self.projectNavigator.update({'fileList': self.model.getFileNames()})
         self.leftLayout = QVBoxLayout()
@@ -65,8 +66,8 @@ class projectView(QWidget):
 
     def connectSignals(self):
         self.projectNavigator.signal.connect(self.handleSignal)
-        self.menuBar.exportMeta.connect(self.exportFileMeta)
-        self.menuBar.importMeta.connect(self.importFileMeta)
+        #self.menuBar.exportMeta.connect(self.exportFileMeta)
+        #self.menuBar.importMeta.connect(self.importFileMeta)
 
     def connectSlots(self):
         #self.fileList.addFile.connect(self.getFile)
