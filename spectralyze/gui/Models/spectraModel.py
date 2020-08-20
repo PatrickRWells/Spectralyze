@@ -6,6 +6,7 @@ import toml
 from importlib import import_module
 import os
 from spectralyze.gui.Models.fileModel import fileModel
+import pickle
 
 class abstractSpectraModel(fileModel):
     """
@@ -24,11 +25,8 @@ class abstractSpectraModel(fileModel):
         self.setup()        
         
     def updateAttributes(self, attributes):
-        for name, data in attributes.items():
-            if type(data) is not list:
-                pass
-            else:
-                self.attributes.update({name: data})
+        self.attributes = attributes
+        
 
     def getWidget(self):
         """
@@ -58,3 +56,18 @@ class abstractSpectraModel(fileModel):
 
     def forceToolboxUpdate(self):
         pass
+
+    def exportFileData(self, fpath):
+        data = self.attributes
+        fname = '.'.join([fpath, 'specm'])
+        with open(fname, 'wb') as outfile:
+            pickle.dump(data, outfile)
+
+    def importFileData(self, data):
+        for key in data.keys():
+            with open(key, 'rb') as infile:
+                data = pickle.load(infile)
+                self.attributes = data
+            self.forceToolboxUpdate()
+
+

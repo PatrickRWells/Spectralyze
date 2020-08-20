@@ -1,13 +1,17 @@
 from spectralyze.gui.Models.fileModel import getFileModel
-from PyQt5.QtWidgets import QStackedWidget
+from PyQt5.QtWidgets import QStackedWidget, QFileDialog
 from PyQt5.QtCore import QRunnable, QThreadPool, pyqtSignal, QObject
+from spectralyze.gui.Views.fileBrowse import fileBrowser
 import pickle
 import os
 import toml
 from importlib import import_module
 from copy import copy
+import time
 
-class projectModel:
+threadPool = QThreadPool()
+
+class projectModel(QObject):
     """
     Model for storing and retrieving project data.
     attributes
@@ -17,6 +21,7 @@ class projectModel:
     fileWidgets: References to the UI widgets associated with the files
     fileConfigs: Dictionary containing file types    
     """
+    loadingComplete = pyqtSignal()
     def __init__(self, name, global_config, file_manager):
         super().__init__()
         self.fileManager = file_manager
@@ -26,12 +31,13 @@ class projectModel:
         self.fileModels = {}
         self.fileWidgets = {}
         self.fileConfigs = {}
+        self.loaded = {}
+
         self.config = toml.load(self.CONFIG_FILE)
         self.widget = None
         self.saveLocation = ""
         self.name = name
-        self.threadPool = QThreadPool()
-    
+
     def setFileManager(self, f):
         """
         Used when loading a previously saved project
@@ -47,10 +53,10 @@ class projectModel:
         del data['fileManager']
         del data['widget']
         del data['fileWidgets']
-        del data['threadPool']
         attributes = {}
         for k, v in data['fileModels'].items():
-            attributes.update({k: v.attributes})
+            att = v.attributes
+            attributes.update({k: att})
         del data['fileModels']
         data.update({'attributes': attributes})
         return data
@@ -60,14 +66,19 @@ class projectModel:
         Reads in the data as outputted by __getstate___
         Automatically called when the project is opened
         """
+        super().__init__()
         attributes = state.pop('attributes')
         self.__dict__ = state
         self.fileWidgets = {}
         self.fileModels = {}
+        self.loaded = {}
         self.widget = None
-        self.threadPool = QThreadPool()
+
         for fname, configtype in self.fileConfigs.items():
             self.addFile(fname, configtype, attributes[fname])
+
+    def setVersion(self, vnumber):
+        self.version = vnumber
 
     def addFile(self, fname, config_type, attributes={}):
         """
@@ -80,14 +91,17 @@ class projectModel:
         else:
             self.fileConfigs.update({fname: config_type})
             loader = fileLoader(fname, config_type, self.global_config, attributes)
-            loader.signals.result.connect(self.updateFiles)
-            self.threadPool.start(loader)
+            loader.signals.result.connect(lambda x: self.updateFiles(x))
+            threadPool.start(loader)
 
     def updateFiles(self, fileobj):
         self.fileModels.update({fileobj.fname: fileobj})
+        self.loaded.update({fileobj.fname: True})
         if self.widget is not None:
             self.updateWidget()
-
+        
+        if len(self.loaded) == len(self.fileConfigs.keys()):
+            self.loadingComplete.emit()
 
 
     def removeFile(self, fname):
@@ -173,6 +187,20 @@ class projectModel:
         Sends itself to the file manager to be saved
         """
         self.fileManager.saveProject(self)
+    
+    def exportData(self, fname, dtype):
+        for key, val in self.fileModels.items():
+            if fname in key:
+                name = QFileDialog.getSaveFileName()
+                val.exportFileData(name[0])
+    
+    def importData(self, fname, data, dtype):
+        for key, val in self.fileModels.items():
+            if fname in key:
+                browser = fileBrowser("spectra meta") #Currently this is the only type of file
+                browser.fileOpened.connect(lambda x: val.importFileData(x))
+                browser.openFile()
+    
 
 class fileLoader(QRunnable):
     def __init__(self, file, config_type, global_config, attributes = {}):
@@ -187,9 +215,26 @@ class fileLoader(QRunnable):
         data = getFileModel(self.file, 'spectra', self.config_type, self.global_config)
         if self.attributes:
             data.updateAttributes(self.attributes)
+        
         self.signals.result.emit(data)
 
 class signals(QObject):
     result=pyqtSignal(object)
     def __init__(self):
         super().__init__()
+
+
+class projectLoader(QObject):
+    loadingComplete = pyqtSignal(object)
+    def __init__(self, fname, fileManager):
+        super().__init__()
+        self.fname = fname
+        self.fileManager = fileManager
+        self.signals = signals()
+    
+    def loadProject(self):
+        with open(self.fname, 'rb') as f:
+            project = pickle.load(f)
+            project.setFileManager(self.fileManager)
+            project.loadingComplete.connect(lambda x=project: self.loadingComplete.emit(x))
+

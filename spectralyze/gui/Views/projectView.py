@@ -6,6 +6,7 @@ from PyQt5.QtGui import QIcon
 
 from spectralyze.gui.Models.projectModel import projectModel
 from spectralyze.gui.Views.fileBrowse import fileBrowser
+from spectralyze.gui.Views.Widgets.menubar import MenuBar
 import datetime
 import os
 import sys
@@ -33,18 +34,19 @@ class projectView(QWidget):
         self.model = project
         self.fileBrowser = None
         self.fileViews = {}
+        self.menuBar = MenuBar()
+
         self.setupWidgets()
         self.connectSignals()
         self.connectSlots()
-
 
     def setupWidgets(self):
         """
         Basic layout includes an editable list of files
         And the stacked widget containing individual file views.
         """
-
         self.layout = QHBoxLayout()
+        self.layout.addWidget(self.menuBar)
         self.projectNavigator = ProjectNavigator(self.global_config)
         self.projectNavigator.update({'fileList': self.model.getFileNames()})
         self.leftLayout = QVBoxLayout()
@@ -63,6 +65,8 @@ class projectView(QWidget):
 
     def connectSignals(self):
         self.projectNavigator.signal.connect(self.handleSignal)
+        self.menuBar.exportMeta.connect(self.exportFileMeta)
+        self.menuBar.importMeta.connect(self.importFileMeta)
 
     def connectSlots(self):
         #self.fileList.addFile.connect(self.getFile)
@@ -95,6 +99,13 @@ class projectView(QWidget):
                 f = getattr(self, k)
                 f(v)
 
+    def exportFileMeta(self):
+        fname = self.projectNavigator.widgets['fileList'].getCurrentSelection()
+        self.model.exportData(fname, 'attributes')
+
+    def importFileMeta(self):
+        fname = self.projectNavigator.widgets['fileList'].getCurrentSelection()
+        self.model.importData(fname, 'meta', 'meta')
 
 class ProjectNavigator(QTabWidget):
     signal = pyqtSignal(dict)
@@ -172,6 +183,10 @@ class fileList(QWidget):
         self.connectSignals()
         
 
+
+    def getCurrentSelection(self):
+        return self.list.currentItem().text()
+
     def connectSignals(self):
         self.addButton.clicked.connect(self.getFile)
         self.removeButton.clicked.connect(self.fileRemoveClicked)
@@ -180,7 +195,12 @@ class fileList(QWidget):
     def update(self, files):
         for file in files:
             self.list.addItem(os.path.basename(file))
+        
+        self.list.setCurrentRow(self.list.count() - 1)
+        self.list.currentItem().setSelected(True)
+
         super().update()
+
 
     def fileRemoveClicked(self):
         item = self.list.currentItem()
@@ -197,6 +217,9 @@ class fileList(QWidget):
         for key, val in data.items():
             self.list.addItem(os.path.basename(key))
         super().update()
+        self.list.setCurrentRow(self.list.count() - 1)
+        self.list.currentItem().setSelected(True)
+
         self.signal.emit({'addFile': data})
 
     def getFile(self):

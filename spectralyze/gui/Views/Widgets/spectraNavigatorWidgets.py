@@ -254,3 +254,31 @@ class LineUpdateTool(QWidget):
             widget.setChecked(False)
 
 
+class classifierTool(QWidget):
+    signal = pyqtSignal(dict)
+    def __init__(self):
+        super().__init__()
+        self.classifier = QComboBox()
+        self.classifier.addItems(['', 'Star', 'Galaxy', 'Unknown'])
+        self.label = QLabel("Classification")
+        self.layout = QHBoxLayout()
+        self.layout.addWidget(self.label)
+        self.layout.addWidget(self.classifier)
+        self.setLayout(self.layout)
+        self.connectSlots()
+    
+    def connectSlots(self):
+        self.classifier.currentTextChanged.connect(self.updateClasification)
+
+    def updateClasification(self):
+        text = self.classifier.currentText()
+        self.signal.emit({'classification': text})
+
+    def update(self, data):
+        for name, value in data.items():
+            if name == "classification":
+                if value:
+                    self.classifier.setCurrentText(value)
+                else:
+                    self.classifier.setCurrentIndex(0)
+        self.repaint()

@@ -38,7 +38,8 @@ class dataSelectWindow(QWidget):
 class fileBrowser(QWidget):
     types = {
         'general': "All Files (*)",
-        'spectra': "Fits Files (*.fits)"
+        'spectra': "Fits Files (*.fits)",
+        'spectra meta': 'specm Files (*.specm)'
     }
     fileOpened = pyqtSignal(dict)
     def __init__(self, type):
@@ -65,7 +66,8 @@ class fileBrowser(QWidget):
                 self.fileOpened.emit({fileName: 'keckcode_deimos1d'})
                 #For now, this is the only type of file we have a configuration for
 
-    
+            if self.type == 'spectra meta':
+                self.fileOpened.emit({fileName: 'specmeta'})
 
 class fileTypeSelector(QWidget):
     def __init__(self):

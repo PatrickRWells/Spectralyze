@@ -33,8 +33,7 @@ class deimos1DSpectra(abstractSpectraModel):
         self.nspec = self.mask.nspec
         self.curspec = 0
         self.cursmooth = 0
-        self.attributes['zguess'] = self.nspec*[0.0]
-        self.attributes['confidence'] = self.nspec*['']
+        self.attributes = {key: {'zguess': 0, 'confidence': '', 'classification': ''} for key in self.keys}
         self.lines = {}
     
     def update(self, data):
@@ -47,6 +46,8 @@ class deimos1DSpectra(abstractSpectraModel):
                 self.updateLines(value)
             elif key == "zguess":
                 self.zGuessUpdate(value)
+            elif key == "classifier":
+                self.classificationUpdate(value)
     
     def navigate(self, data):
         for key, val in data.items():
@@ -118,22 +119,31 @@ class deimos1DSpectra(abstractSpectraModel):
         else:
             self.plotGraph(self.curspec)
 
-        self.mask.mark_lines(lines, self.attributes['zguess'][self.curspec], self.keys[self.curspec], fig=self.plot, usesmooth=self.cursmooth)
+        self.mask.mark_lines(lines, self.attributes[self.keys[self.curspec]]['zguess'], self.keys[self.curspec], fig=self.plot, usesmooth=self.cursmooth)
         self.spectraView.canvas.draw()
 
     def zGuessUpdate(self, zguess, **kwargs):
+        skey = self.keys[self.curspec]
         for key,value in zguess.items():
             if key == "guess":
-                self.attributes['zguess'][self.curspec] = value
+                self.attributes[skey]['zguess'] = value
             elif key == "confidence":
-                self.attributes['confidence'][self.curspec] = value
+                self.attributes[skey]['confidence'] = value
+
+    def classificationUpdate(self, classification):
+        for key, val in classification.items():
+            if key == 'classification':
+                skey = self.keys[self.curspec]
+                self.attributes[skey]['classification'] = val
 
     def forceToolboxUpdate(self):
-        self.toolbox.update({'zguess': {'zguess': self.attributes['zguess'][self.curspec]}})
-        self.toolbox.update({'zguess': {'confidence': self.attributes['confidence'][self.curspec]}})
+        key = self.keys[self.curspec]
+        self.toolbox.update({'zguess': {'zguess': self.attributes[key]['zguess']}})
+        self.toolbox.update({'zguess': {'confidence': self.attributes[key]['confidence']}})
         self.toolbox.update({'navigator':{'nspec': self.nspec}})
         self.toolbox.update({'lineupdate': {'strongem' : False, 'em' : False, 'abs' : False}})
         self.toolbox.update({'spectraInfo':{'slitid': self.getCurrentSlitId()}})
+        self.toolbox.update({'classifier': {'classification': self.attributes[key]['classification']}})
     
     def getCurrentSlitId(self):
         name = self.keys[self.curspec]

@@ -5,6 +5,7 @@
     spectraInfo="spectraInfo"
     smoothing="SmoothingTool"
     zguess="ZGuessTool"
+    classifier="classifierTool"
     lineupdate="LineUpdateTool"
 
 [keck1d]

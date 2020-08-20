@@ -6,6 +6,7 @@ toolbox="keck1d"
     [keckcode_deimos1d.attributes]
     zguess="float"
     confidence="string"
+    classification="string"
     [keckcode_deimos1d.tools]
     SpectrumNavigatorTool.next="nextGraph"
     SpectrumNavigatorTool.prev="prevGraph"
