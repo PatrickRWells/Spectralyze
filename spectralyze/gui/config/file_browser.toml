@@ -1,0 +1,3 @@
+[ftypes]
+    [ftypes.spectraMeta]
+        filter='specm Files (*.specm)'

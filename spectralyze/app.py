@@ -81,6 +81,7 @@ class spectralyzeApp(QApplication):
         self.windows.update({name: window})
         self.setActiveWindow(window)
         window.saveProject.connect(project.save)
+        project.updateGlobalConfig(self.config)
 
     
     def removeProject(self, name):

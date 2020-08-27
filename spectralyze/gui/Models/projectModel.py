@@ -42,7 +42,10 @@ class projectModel(QObject):
         self.config = toml.load(self.CONFIG_FILE)
 
 
-        
+    def updateGlobalConfig(self, config):
+        self.global_config = config
+        for fmodel in self.fileModels.values():
+            fmodel.updateGlobalConfig(config)
     def setFileManager(self, f):
         """
         Used when loading a previously saved project
@@ -85,7 +88,7 @@ class projectModel(QObject):
 
         for fname, configtype in self.fileConfigs.items():
             self.addFile(fname, configtype, attributes[fname])
-
+        
     def setVersion(self, vnumber):
         self.version = vnumber
 
@@ -105,6 +108,7 @@ class projectModel(QObject):
 
     def updateFiles(self, fileobj):
         self.fileModels.update({fileobj.fname: fileobj})
+        fileobj.updateGlobalConfig(self.global_config)
         self.loaded.update({fileobj.fname: True})
         if self.widget is not None:
             self.updateWidget()

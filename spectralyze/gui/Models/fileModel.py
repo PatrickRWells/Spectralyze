@@ -11,7 +11,6 @@ class fileModel:
         pass
     
     def setFileManager(self, f):
-        print(f)
         self.fileManager = f
 
 def getFileModel(fname, type, config_type, global_config):

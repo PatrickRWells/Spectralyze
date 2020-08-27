@@ -1,5 +1,31 @@
 from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QFileDialog, QHBoxLayout
 from PyQt5.QtCore import pyqtSignal
+import toml
+import os
+
+
+
+
+class fileBrowser(QFileDialog):
+    def __init__(self, global_config):
+        self.global_config = global_config
+        self.CONFIG_FILE = os.path.join(self.global_config['config_location'],
+                                        self.global_config['fileBrowser'])
+        self.config = toml.load(self.CONFIG_FILE)
+        super().__init__()  
+
+
+    def browseSaveLocation(self, ftype):
+        if ftype in self.config['ftypes']:
+            filter = self.config['ftypes'][ftype]['filter']
+            fname = self.getSaveFileName(filter=filter)
+            return fname
+
+    def browseOpenLocation(self, ftype):
+        if ftype in self.config['ftypes']:
+            filter = self.config['ftypes'][ftype]['filter']
+            fname = self.getOpenFileName(filter=filter)
+            return fname
 
 class dataSelectWindow(QWidget):
     """
@@ -35,39 +61,6 @@ class dataSelectWindow(QWidget):
     def openFile(self, file):
         self.fileOpened.emit(file)
 
-class fileBrowser(QWidget):
-    types = {
-        'general': "All Files (*)",
-        'spectra': "Fits Files (*.fits)",
-        'spectra meta': 'specm Files (*.specm)'
-    }
-    fileOpened = pyqtSignal(dict)
-    def __init__(self, type):
-        super().__init__()
-
-        assert type in self.types.keys(), "FBoxType not found"
-        self.type = type
-
-        self.title = "Browse"    
-        self.left = 10
-        self.top = 10
-        self.width = 640
-        self.height = 480
-    
-    def openFile(self):
-        self.setWindowTitle(self.title)
-        self.setGeometry(self.left, self.top, self.width, self.height)
-        self.openFileNameDialog()
-
-    def openFileNameDialog(self):
-        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "/Volumes/workspace/Data/reduced/Science", self.types[self.type])
-        if fileName:
-            if self.type == 'spectra':
-                self.fileOpened.emit({fileName: 'keckcode_deimos1d'})
-                #For now, this is the only type of file we have a configuration for
-
-            if self.type == 'spectra meta':
-                self.fileOpened.emit({fileName: 'specmeta'})
 
 class fileTypeSelector(QWidget):
     def __init__(self):
