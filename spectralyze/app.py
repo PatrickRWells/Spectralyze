@@ -73,7 +73,7 @@ class spectralyzeApp(QApplication):
         project = data['obj']
         if not hasattr(project, 'version'):
             updateProjectVersion(project)
-
+                    
         window = projectView(data['obj'], self.config)
 
         name = data['name']

@@ -217,19 +217,6 @@ class projectModel(QObject):
     def handleSignal(self, signal):
         if signal['target'] == 'fileModel':
             self.fileModels[self.active].handleSignal(signal)
-
-    def exportData(self, fname, dtype):
-        for key, val in self.fileModels.items():
-            if fname in key:
-                name = QFileDialog.getSaveFileName()
-                val.exportFileData(name[0])
-    
-    def importData(self, fname, data, dtype):
-        for key, val in self.fileModels.items():
-            if fname in key:
-                browser = fileBrowser("spectra meta") #Currently this is the only type of file
-                browser.fileOpened.connect(lambda x: val.importFileData(x))
-                browser.openFile()
     
 
 class fileLoader(QRunnable):
