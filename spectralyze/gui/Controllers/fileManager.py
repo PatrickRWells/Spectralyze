@@ -5,6 +5,7 @@ import toml
 from PyQt5.QtCore import QThreadPool, pyqtSignal, QObject
 from PyQt5.QtWidgets import QDialog
 from spectralyze.gui.Models.projectModel import projectLoader
+from spectralyze.gui.Views.fileBrowse import fileBrowser
 import signal
 
 class fileManager(QObject):
@@ -17,6 +18,8 @@ class fileManager(QObject):
         self.checkSaveConfig()
         self.projects = toml.load(self.PROJECT_CONFIG_LOCATION)
         self.threadPool = QThreadPool()
+        self.fileBrowser = None
+
 
     def saveProject(self, model):
         filename = os.path.join(self.PROJECT_SAVE_LOCATION, '.'.join([model.name, 'spec']))

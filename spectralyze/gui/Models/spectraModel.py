@@ -6,6 +6,7 @@ import toml
 from importlib import import_module
 import os
 from spectralyze.gui.Models.fileModel import fileModel
+from spectralyze.gui.Views.fileBrowse import fileBrowser
 import pickle
 
 class abstractSpectraModel(fileModel):
@@ -13,6 +14,7 @@ class abstractSpectraModel(fileModel):
     An abstract class for handling spectra objects
     """
     def __init__(self, fname, config_type, global_config):
+        super().__init__()
 
         self.global_config = global_config
         self.CONFIG_FILE = os.path.join(self.global_config['config_location'],
@@ -22,10 +24,18 @@ class abstractSpectraModel(fileModel):
         self.toolbox = None
         self.fname = fname
         self.attributes = {}
+        self.browser = None
         self.setup()        
         
     def updateAttributes(self, attributes):
         self.attributes = attributes
+
+    def updateGlobalConfig(self, config):
+        self.global_config = config
+        for item in self.__dict__.values():
+            if hasattr(item, 'global_config'):
+                item.global_config = self.global_config
+
         
 
     def getWidget(self):
@@ -57,17 +67,26 @@ class abstractSpectraModel(fileModel):
     def forceToolboxUpdate(self):
         pass
 
-    def exportFileData(self, fpath):
+    def exportMetaData(self, **kwargs):
+        if self.browser is None:
+            self.browser = fileBrowser(self.global_config)
+        fname = self.browser.browseSaveLocation('spectraMeta')[0]
         data = self.attributes
-        fname = '.'.join([fpath, 'specm'])
-        with open(fname, 'wb') as outfile:
-            pickle.dump(data, outfile)
+        if fname:
+            with open(fname, 'wb') as outfile:
+                pickle.dump(data, outfile)
 
-    def importFileData(self, data):
-        for key in data.keys():
-            with open(key, 'rb') as infile:
-                data = pickle.load(infile)
-                self.attributes = data
+    def importMetaData(self, **kwargs):
+        if self.browser is None:
+            self.browser = fileBrowser(self.global_config)
+        fname = self.browser.browseOpenLocation('spectraMeta')[0]
+        if fname:
+            with open(fname, 'rb') as infile:
+                self.attributes = pickle.load(infile)
             self.forceToolboxUpdate()
 
+    def handleSignal(self, signal):
+        if hasattr(self,  signal['action']):
+            f = getattr(self, signal['action'])
+            f(**signal)
 

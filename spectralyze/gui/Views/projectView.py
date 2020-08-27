@@ -29,16 +29,18 @@ class projectView(QWidget):
     def __init__(self, project, global_config):
         super().__init__()
         self.global_config = global_config
+
         self.CONFIG_FILE = os.path.join(self.global_config['config_location'], 
                                     self.global_config['projectView'])
         self.model = project
         self.fileBrowser = None
         self.fileViews = {}
-        self.menuBar = MenuBar()
+        self.menuBar = MenuBar(self.global_config)
 
         self.setupWidgets()
         self.connectSignals()
         self.connectSlots()
+        super().update()
 
     def setupWidgets(self):
         """
@@ -65,8 +67,9 @@ class projectView(QWidget):
 
     def connectSignals(self):
         self.projectNavigator.signal.connect(self.handleSignal)
-        self.menuBar.exportMeta.connect(self.exportFileMeta)
-        self.menuBar.importMeta.connect(self.importFileMeta)
+        self.menuBar.signal.connect(self.handleMenuBarAction)
+        #self.menuBar.exportMeta.connect(self.exportFileMeta)
+        #self.menuBar.importMeta.connect(self.importFileMeta)
 
     def connectSlots(self):
         #self.fileList.addFile.connect(self.getFile)
@@ -98,10 +101,10 @@ class projectView(QWidget):
             if hasattr(self, k):
                 f = getattr(self, k)
                 f(v)
-
-    def exportFileMeta(self):
-        fname = self.projectNavigator.widgets['fileList'].getCurrentSelection()
-        self.model.exportData(fname, 'attributes')
+    
+    def handleMenuBarAction(self, data):
+        if self.model.canHandle(data['target']):
+            self.model.handleSignal(data)
 
     def importFileMeta(self):
         fname = self.projectNavigator.widgets['fileList'].getCurrentSelection()
@@ -126,7 +129,7 @@ class ProjectNavigator(QTabWidget):
         self.icons = {}
         for name, data in self.config['widgets'].items():
             widget_type = getattr(sys.modules[__name__], data['widget'])
-            widget = widget_type()
+            widget = widget_type(global_config=self.global_config)
             self.widgets.update({name: widget})
             self.icons.update({name: data['icons']})
             img_loc = os.path.join(self.icon_root, self.icons[name]['inactive'])
@@ -225,12 +228,12 @@ class fileList(QWidget):
         self.signal.emit({'addFile': data})
 
     def getFile(self):
+        print(self.global_config)
         if self.fileBrowser is None:
-            self.fileBrowser = fileBrowser("spectra") #Currently this is the only type of file
-                                                      #we know how to handle
-            self.fileBrowser.fileOpened.connect(self.addFile)
-
-        self.fileBrowser.openFile()
+            self.fileBrowser = fileBrowser(self.global_config) 
+        fname = self.fileBrowser.browseOpenLocation("fits")
+        if fname[0]:
+            self.addAction(fname)
 
 
 

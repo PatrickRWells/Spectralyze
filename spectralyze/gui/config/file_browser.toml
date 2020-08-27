@@ -1,0 +1,5 @@
+[ftypes]
+    [ftypes.spectraMeta]
+        filter='specm Files (*.specm)'
+    [ftypes.fits]
+        filter="Fits Files (*.fits)"

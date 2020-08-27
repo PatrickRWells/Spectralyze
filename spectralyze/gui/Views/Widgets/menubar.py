@@ -2,23 +2,39 @@ from PyQt5.QtWidgets import QMenuBar, QAction
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QIcon
 import toml
-import os 
+import os
 
 class MenuBar(QMenuBar):
-    exportMeta = pyqtSignal()
-    importMeta = pyqtSignal()
-    def __init__(self):
+    signal = pyqtSignal(dict)
+    def __init__(self, global_config):
+        self.global_config = global_config
+        self.CONFIG_FILE = os.path.join(self.global_config['config_location'],
+                                    self.global_config['menuBar'])
+        self.config = toml.load(self.CONFIG_FILE)
+
         super().__init__()
         self.setup()
-    
+
     def setup(self):
-        self.fileMenu = self.addMenu("File")
-        self.ex = QAction(QIcon(''), 'Export File Data')
-        self.im = QAction(QIcon(''), 'Import File Data')
-        self.ex.triggered.connect(self.exportMeta.emit)
-        self.im.triggered.connect(self.importMeta.emit)
-        self.fileMenu.addAction(self.ex)
-        self.fileMenu.addAction(self.im)
+        self.menus = {}
+        self.menuItems = {}
+        for menu in self.config['menus']:
+            menuData = self.config['menus'][menu]
+            menuName = menuData['name']
+            menuObj = self.addMenu(menuName)
+            self.menus.update({menuName: menuObj})
+            self.menuItems.update({menuName: {}})
+            for action in menuData['actions']:
+                actionData = menuData['actions'][action]
+                actName = actionData['name']
+                actTarget = actionData['target']
+                icon = actionData['icon']
+                if icon == 'None':
+                    actObj = QAction(QIcon(''), actName)
+                    actObj.triggered.connect(lambda x, y=action, z=actTarget: self.signal.emit({'target': z, 'action': y}))
+                    actObj.isIconVisibleInMenu = False
+                    menuObj.addAction(actObj)
+                    self.menuItems[menuName].update({action:  actObj})
 
 
 

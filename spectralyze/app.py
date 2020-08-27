@@ -73,7 +73,7 @@ class spectralyzeApp(QApplication):
         project = data['obj']
         if not hasattr(project, 'version'):
             updateProjectVersion(project)
-
+                    
         window = projectView(data['obj'], self.config)
 
         name = data['name']
@@ -81,6 +81,7 @@ class spectralyzeApp(QApplication):
         self.windows.update({name: window})
         self.setActiveWindow(window)
         window.saveProject.connect(project.save)
+        project.updateGlobalConfig(self.config)
 
     
     def removeProject(self, name):
